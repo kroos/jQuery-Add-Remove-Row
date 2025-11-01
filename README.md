@@ -241,7 +241,7 @@ MIT License © Your Name
 
 ## 💬 Credits
 
-Developed by **Your Name**  
+Developed by **kroos**  
 Inspired by classic jQuery dynamic form techniques and refactored for modern ES module support.
 
 ---
