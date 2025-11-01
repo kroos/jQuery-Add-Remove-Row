@@ -1,3 +1,75 @@
+/**
+ * --------------------------------------------------------------------------
+ * jQuery Add/Remove Row Plugin
+ * --------------------------------------------------------------------------
+ * A lightweight jQuery plugin to dynamically add and remove rows or form fields
+ * with automatic reindexing, configurable templates, and event callbacks.
+ *
+ * Author: kroos
+ * License: MIT
+ * Version: 1.0.0
+ * --------------------------------------------------------------------------
+ *
+ * 🧩 FEATURES:
+ * - Add and remove form rows dynamically
+ * - Automatic reindexing of names and IDs (e.g. rows[0], rows[1], ...)
+ * - Customizable HTML row template via `rowTemplate()`
+ * - Built-in callbacks: `onAdd()` and `onRemove()`
+ * - Optional limits for max number of fields
+ * - ES module compatible (`export default $`)
+ *
+ * --------------------------------------------------------------------------
+ * 📦 USAGE:
+ *
+ * HTML:
+ *   <div id="rowsWrapper"></div>
+ *   <button id="addRowBtn" type="button">Add Row</button>
+ *
+ * JS:
+ *   $('#rowsWrapper').remAddRow({
+ *     addBtn: '#addRowBtn',
+ *     fieldName: 'users',
+ *     onAdd: (i, $row) => console.log('Added:', i),
+ *     onRemove: (i) => console.log('Removed:', i)
+ *   });
+ *
+ * --------------------------------------------------------------------------
+ * ⚙️ OPTIONS:
+ *
+ *  addBtn            → Selector for the Add button (required)
+ *  maxFields         → Max number of rows (default: 10)
+ *  removeSelector    → Selector for remove buttons (default: ".row_remove")
+ *  fieldName         → Base name for field groups (default: "rows")
+ *  rowIdPrefix       → Prefix for each row id (default: "row")
+ *  reindexOnRemove   → Whether to reindex after remove (default: true)
+ *  rowTemplate(i, name) → Function returning HTML for each row
+ *  onAdd(i, $row)    → Callback after a new row is added
+ *  onRemove(i)       → Callback after a row is removed
+ *
+ * --------------------------------------------------------------------------
+ * 💻 EXAMPLE CUSTOM TEMPLATE:
+ *
+ *   rowTemplate: (i, name) => `
+ *     <div class="user-row" id="user_${i}">
+ *       <label>User ${i + 1}</label>
+ *       <input type="text" name="${name}[${i}][name]" />
+ *       <button type="button" class="btn btn-danger row_remove" data-id="${i}">
+ *         Remove
+ *       </button>
+ *     </div>
+ *   `
+ *
+ * --------------------------------------------------------------------------
+ * 🧠 NOTES:
+ * - Works great with Laravel-style indexed form arrays.
+ * - Reindexes automatically on both add and remove events.
+ * - Disable add button automatically when `maxFields` is reached.
+ * - Compatible with Bootstrap, TailwindCSS, or custom UI frameworks.
+ * - You can safely import/export with modern build systems.
+ *
+ * --------------------------------------------------------------------------
+ */
+
 (function ($) {
 	$.fn.remAddRow = function (options) {
 		const settings = $.extend({
