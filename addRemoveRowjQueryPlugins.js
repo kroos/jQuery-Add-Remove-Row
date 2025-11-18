@@ -92,7 +92,7 @@
 			},
 			startCounter: 0,
 			onAdd: (i, $row) => {},
-			onRemove: (i) => {}
+			onRemove: (i, event) => {}
 		}, options);
 
 		const $wrapper = this;
@@ -178,7 +178,7 @@
 			if ($target.length) {
 				$target.remove();
 				if (settings.reindexOnRemove) reindexRows();
-				settings.onRemove(id);
+				settings.onRemove(id, event);
 				updateAddBtnState();
 			} else {
 				console.warn('remAddRow: could not locate row to remove for id=', id);
