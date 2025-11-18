@@ -80,7 +80,7 @@ You can pass options to customize the behavior:
 | `rowTemplate(i, name)` | `function` | *(default template)* | Function returning the HTML for a new row |
 | `startCounter` | `number` | `0` | Optional offset for numbering |
 | `onAdd(i, $row)` | `function` | `() => {}` | Callback fired after a row is added |
-| `onRemove(i, event)` | `function` | `() => {}` | Callback fired after a row is removed |
+| `onRemove(i, event)` | `function` | `() => {}` | Callback fired before a row is removed |
 
 ---
 
