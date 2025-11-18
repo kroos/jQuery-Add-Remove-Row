@@ -80,7 +80,7 @@ You can pass options to customize the behavior:
 | `rowTemplate(i, name)` | `function` | *(default template)* | Function returning the HTML for a new row |
 | `startCounter` | `number` | `0` | Optional offset for numbering |
 | `onAdd(i, $row)` | `function` | `() => {}` | Callback fired after a row is added |
-| `onRemove(i)` | `function` | `() => {}` | Callback fired after a row is removed |
+| `onRemove(i, event)` | `function` | `() => {}` | Callback fired after a row is removed |
 
 ---
 
@@ -111,6 +111,77 @@ $('#rowsWrapper').remAddRow({
 });
 ```
 
+```javascript
+$("#applicants_wrap").remAddRow({
+    addBtn: "#applicants_add",
+    maxFields: 5,
+    removeSelector: ".applicant_remove",
+    fieldName: "applicants",
+    rowIdPrefix: "applicant",
+    rowTemplate: (i, name) => `
+        <div class="col-sm-12 row m-3" id="applicant_${i}">
+            <input type="hidden" name="${name}[${i}][id]" value="">
+            <div class="col-sm-7 m-0 p-1">
+
+                <div class="col-sm-12 m-1 row">
+                    <x-input-label for="nama_${i}" class="col-sm-3" :value="__('Nama : ')" />
+                    <div class="col-sm-9">
+                        <select id="nama_${i}" name="${name}[${i}][nama]" class="form-select form-select-sm @error('applicants.*.nama') is-invalid @enderror" placeholder="Please choose"></select>
+                        @error('applicants.*.nama')
+                        <div class="invalid-feedback">
+                            {{ $message }}
+                        </div>
+                        @enderror
+                    </div>
+                </div>
+
+            <div class="col-sm-12 m-2">
+                <button type="button" class=" btn btn-sm btn-danger applicant_remove" data-id="${i}"><i class="fa-regular fa-trash-can fa-beat"></i>&nbsp;Padam Pemohon</button>
+            </div>
+        </div>
+    `,
+    onAdd: (i, $r) => {
+        // console.log('Applicants added', i, $r)
+        selectname(i);
+    },
+    onRemove: (i, event) => {
+        event.preventDefault();
+        const $row = $(`#applicant_${i}`);
+        const idv = $row.find(`input[name="applicants[${i}][id]"]`).val();
+        console.log(idv);
+        if (!idv) {
+            $row.remove();
+            return;
+        }
+        swal.fire({
+            title: 'Delete applicant?',
+            text: 'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then(result => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/applicants/${idv}`,
+                    type: 'DELETE',
+                    data: { _token: $('meta[name="csrf-token"]').attr('content') },
+                    success: response => {
+                        swal.fire('Deleted!', response.message, 'success');
+                        $row.remove();  // remove only after DB deletion
+                    },
+                    error: xhr => {
+                        swal.fire('Error', 'Failed to delete applicant', 'error');
+                    }
+                });
+            }
+        });
+    }
+});
+
+```
+
+
 ---
 
 ## 🔁 Callbacks
@@ -125,11 +196,11 @@ onAdd: (index, $row) => {
 ```
 
 ### onRemove
-Called right after a row is removed.
+Called right BEFORE a row is removed.
 
 ```javascript
-onRemove: (index) => {
-  console.log("Removed row:", index);
+onRemove: (index, event) => {
+  console.log("Removed row:", index, event);
 }
 ```
 
@@ -179,7 +250,7 @@ $('#rowsWrapper').remAddRow({
   addBtn: '#addRowBtn',
   fieldName: 'users',
   onAdd: (i, $row) => console.log('Added:', i),
-  onRemove: (i) => console.log('Removed:', i)
+  onRemove: (i, e) => console.log('Removed:', i, e)
 });
 
 $('#dynamicForm').on('submit', function (e) {
@@ -235,7 +306,7 @@ $('#rowsWrapper').remAddRow({
 
 ## 🧾 License
 
-MIT License © Your Name
+MIT License © kroos
 
 ---
 
