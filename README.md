@@ -80,7 +80,7 @@ You can pass options to customize the behavior:
 | `rowTemplate(i, name)` | `function` | *(default template)* | Function returning the HTML for a new row |
 | `startCounter` | `number` | `0` | Optional offset for numbering |
 | `onAdd(i, $row)` | `function` | `() => {}` | Callback fired after a row is added |
-| `onRemove(i, event)` | `function` | `() => {}` | Callback fired before a row is removed |
+| `onRemove(i, event, $row, name)` | `function` | `() => {}` | Callback fired before a row is removed |
 
 ---
 
@@ -144,10 +144,10 @@ $("#applicants_wrap").remAddRow({
         // console.log('Applicants added', i, $r)
         selectname(i);
     },
-    onRemove: (i, event) => {
+    onRemove: (i, event, $row, name) => {
         event.preventDefault();
-        const $row = $(`#applicant_${i}`);
-        const idv = $row.find(`input[name="applicants[${i}][id]"]`).val();
+        // const $row = $(`#applicant_${i}`);
+        const idv = $row.find(`input[name="${name}[${i}][id]"]`).val();
         console.log(idv);
         if (!idv) {
             $row.remove();
@@ -199,8 +199,8 @@ onAdd: (index, $row) => {
 Called right BEFORE a row is removed.
 
 ```javascript
-onRemove: (index, event) => {
-  console.log("Removed row:", index, event);
+onRemove: (index, event, $target, fieldName) => {
+  console.log("Removed row:", index, event, $target, fieldName);
 }
 ```
 
