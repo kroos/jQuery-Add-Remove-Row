@@ -176,7 +176,7 @@
 			if (!$target.length) $target = clicked.closest('.row-box');
 
 			if ($target.length) {
-				settings.onRemove(id, e, $target);   // run callback first
+				settings.onRemove?.(id, e, $target, settings.fieldName);   // run callback first
 				// only remove if callback does NOT cancel it
 				if (!e.isDefaultPrevented()) {
     				$target.remove();
