@@ -1,19 +1,19 @@
 # jQuery Add/Remove Row Plugin
 
-A lightweight, dependency-free (only requires jQuery) plugin that simplifies dynamic **row management** for HTML forms or lists.  
+A lightweight, dependency-free (only requires jQuery) plugin that simplifies dynamic **row management** for HTML forms or lists.
 It lets you easily add and remove rows (form fields, groups, or elements) with automatic **reindexing**, customizable templates, and event hooks — all without breaking existing code.
 
 ---
 
 ## 🌟 Features
 
-- ✅ Add and remove form rows dynamically  
-- 🔢 Automatic reindexing of input names and row IDs  
-- 🧩 Fully customizable row templates  
-- ⚙️ Configurable options (max rows, field name prefix, etc.)  
-- 🧠 Smart detection of remove targets (works even with nested DOMs)  
-- 🪄 Built-in callbacks: `onAdd` and `onRemove`  
-- 💡 ES module–ready (`export default $`)  
+- ✅ Add and remove form rows dynamically
+- 🔢 Automatic reindexing of input names and row IDs
+- 🧩 Fully customizable row templates
+- ⚙️ Configurable options (max rows, field name prefix, etc.)
+- 🧠 Smart detection of remove targets (works even with nested DOMs)
+- 🪄 Built-in callbacks: `onAdd` and `onRemove`
+- 💡 ES module–ready (`export default $`)
 
 ---
 
@@ -79,7 +79,7 @@ You can pass options to customize the behavior:
 | `reindexOnRemove` | `boolean` | `true` | Whether to reindex fields and IDs after removing a row |
 | `rowTemplate(i, name)` | `function` | *(default template)* | Function returning the HTML for a new row |
 | `startCounter` | `number` | `0` | Optional offset for numbering |
-| `onAdd(i, $row)` | `function` | `() => {}` | Callback fired after a row is added |
+| `onAdd(i, event, $row, name)` | `function` | `() => {}` | Callback fired after a row is added |
 | `onRemove(i, event, $row, name)` | `function` | `() => {}` | Callback fired before a row is removed |
 
 ---
@@ -140,13 +140,13 @@ $("#applicants_wrap").remAddRow({
             </div>
         </div>
     `,
-    onAdd: (i, $r) => {
+    onAdd: (i, e, $r, name) => {
         // console.log('Applicants added', i, $r)
         selectname(i);
     },
     onRemove: (i, event, $row, name) => {
         event.preventDefault();
-        // const $row = $(`#applicant_${i}`);
+
         const idv = $row.find(`input[name="${name}[${i}][id]"]`).val();
         console.log(idv);
         if (!idv) {
@@ -190,7 +190,7 @@ $("#applicants_wrap").remAddRow({
 Called immediately after a new row is added.
 
 ```javascript
-onAdd: (index, $row) => {
+onAdd: (index, event, $row, name) => {
   console.log("Added row:", index);
 }
 ```
@@ -220,18 +220,18 @@ This ensures compatibility with Laravel-style form arrays or any indexed input g
 
 ## 🧠 How It Works Internally
 
-1. **Initialization**  
-   - Reads your config options and binds the Add/Remove event listeners.  
+1. **Initialization**
+   - Reads your config options and binds the Add/Remove event listeners.
    - Reindexes any pre-existing rows on page load.
 
-2. **Adding Rows**  
+2. **Adding Rows**
    - Clones the template, inserts it, reindexes all rows, and calls `onAdd`.
 
-3. **Removing Rows**  
-   - Finds the correct row (using `data-id` or fallback detection).  
+3. **Removing Rows**
+   - Finds the correct row (using `data-id` or fallback detection).
    - Removes it, reindexes remaining rows, and calls `onRemove`.
 
-4. **Max Fields Control**  
+4. **Max Fields Control**
    - Disables the “Add” button when `maxFields` is reached.
 
 ---
@@ -249,8 +249,8 @@ This ensures compatibility with Laravel-style form arrays or any indexed input g
 $('#rowsWrapper').remAddRow({
   addBtn: '#addRowBtn',
   fieldName: 'users',
-  onAdd: (i, $row) => console.log('Added:', i),
-  onRemove: (i, e) => console.log('Removed:', i, e)
+  onAdd: (i, e, $row, name) => console.log('Added:', i),
+  onRemove: (i, e, $row, name) => console.log('Removed:', i, e)
 });
 
 $('#dynamicForm').on('submit', function (e) {
@@ -264,7 +264,7 @@ $('#dynamicForm').on('submit', function (e) {
 
 ## 🧩 Live Demo Example
 
-You can test it directly on CodePen or JSFiddle:  
+You can test it directly on CodePen or JSFiddle:
 👉 [Live Demo (CodePen)](https://codepen.io/pen?template=ExVwVyw)
 
 ---
@@ -312,7 +312,7 @@ MIT License © kroos
 
 ## 💬 Credits
 
-Developed by **kroos**  
+Developed by **kroos**
 Inspired by classic jQuery dynamic form techniques and refactored for modern ES module support.
 
 ---

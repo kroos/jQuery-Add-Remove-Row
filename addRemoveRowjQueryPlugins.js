@@ -144,7 +144,7 @@
 		updateAddBtnState();
 
 		// ADD handler: base next index on current number of children (keeps indices contiguous)
-		$addBtn.on('click', function () {
+		$addBtn.on('click', function (e) {
 			const currentCount = $wrapper.children().length;
 			if (currentCount >= settings.maxFields) return;
 			const index = currentCount; // next index
@@ -152,7 +152,8 @@
 			$wrapper.append($row);
 			// If rowTemplate didn't embed the correct data-id or names, we reindex to be safe
 			if (settings.reindexOnRemove) reindexRows();
-			settings.onAdd(index, $row);
+			// this is a callback that pass parameter
+			settings.onAdd(index, e, $row, settings.fieldName);
 			updateAddBtnState();
 		});
 
@@ -176,6 +177,7 @@
 			if (!$target.length) $target = clicked.closest('.row-box');
 
 			if ($target.length) {
+				// this is a callback that pass parameter
 				settings.onRemove?.(id, e, $target, settings.fieldName);   // run callback first
 				// only remove if callback does NOT cancel it
 				if (!e.isDefaultPrevented()) {
