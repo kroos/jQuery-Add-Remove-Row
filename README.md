@@ -75,10 +75,10 @@ You can pass options to customize the behavior:
 | `maxRows` | `number` | `10` | Maximum number of rows allowed |
 | `rowSelector` | `string` | `rowSkill` | A word for selector for each row. Can be both(class or id) |
 | `fieldName` | `string` | `"persons"` | Base name for form field groups (`persons[0][name], persons[1][name], ...`) |
-| `removeSelector` | `string` | `"row"` | Selector class to remove a row |
+| `removeClass` | `string` | `"row"` | String class to remove a row |
 | `reindexOnRemove` | `boolean` | `return true` | Reindex all rows after removing a row (`return true`) |
 | `rowTemplate` | `function` | `(i, name) => {}` *(default template)* | Function returning the HTML for a new row |
-| `startCounter` | `number` | `0` | Optional offset for numbering |
+| `startRow` | `number` | `0` | Optional offset for numbering |
 | `onAdd` | `function` | `(i, event, $row, name) => {}` | Callback fired after a row is added |
 | `onRemove` | `function` | `(i, event, $row, name) => {}` | Callback fired before a row is removed |
 | `reindexOnRemove` | `boolean` | `return false` | Halt remove a row and reindexing (`return false`) |

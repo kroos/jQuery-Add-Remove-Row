@@ -38,7 +38,7 @@
  *
  *  addBtn            → Selector for the Add button (required)
  *  maxFields         → Max number of rows (default: 10)
- *  removeSelector    → Selector for remove buttons (default: ".row_remove")
+ *  removeClass    → Selector for remove buttons (default: ".row_remove")
  *  fieldName         → Base name for field groups (default: "rows")
  *  rowIdPrefix       → Prefix for each row id (default: "row")
  *  rowTemplate(i, name) → Function returning HTML for each row
@@ -85,10 +85,10 @@
 		const defaults = {
 			addBtn: '',
 			maxRows: 5,
-			startCounter: 0,
+			startRow: 0,
 			fieldName: 'data',
 			rowSelector: 'rowserial',
-			removeSelector: 'serial_remove',
+			removeClass: 'serial_remove',
 			onAdd: null,
 			onRemove: null,
 			// Default reindexing patterns
@@ -99,8 +99,25 @@
 
 		// Merge options
 		const settings = Object.assign({}, defaults, options);
+
+		// custom
+		// 🔹 Smart merge for reindex arrays
+		['reindexRowName', 'reindexRowID', 'reindexRowIndex'].forEach(key => {
+			if (key in options) {
+				// If user explicitly sets it (even empty), respect it
+				settings[key] = Array.isArray(options[key])
+				? [...new Set([...(defaults[key] || []), ...options[key]])]
+				: options[key];
+			} else {
+				// User did NOT provide it → keep defaults
+				settings[key] = [...(defaults[key] || [])];
+			}
+		});
+
+
+
 		const $wrapper = this;
-		let i = settings.startCounter;
+		let i = settings.startRow;
 
 		// Initialize
 		function init() {
@@ -113,8 +130,8 @@
 			}
 
 			// Delegate remove button events
-			$wrapper.off('click.remAddRow', `.${settings.removeSelector}`)
-			.on('click.remAddRow', `.${settings.removeSelector}`, removeRow);
+			$wrapper.off('click.remAddRow', `.${settings.removeClass}`)
+			.on('click.remAddRow', `.${settings.removeClass}`, removeRow);
 
 			return methods;
 		}
@@ -180,7 +197,7 @@
 
 					<div class="col-sm-4 m-0">
 						<button type="button"
-								class="btn btn-sm btn-outline-danger ${settings.removeSelector}"
+								class="btn btn-sm btn-outline-danger ${settings.removeClass}"
 								data-index="${index}">Remove</button>
 					</div>
 				</div>
@@ -191,7 +208,7 @@
 		const removeRow = function(e) {
 			const $button = $(this);
 			const idIndex = $button.data('index');
-			let $row = $(`#${settings.fieldName}_${idIndex}`, $wrapper);
+			let $row = $(`#${settings.rowSelector}_${idIndex}`, $wrapper);
 
 			// Fallback: try to find row by traversing DOM
 			if (!$row.length) {
@@ -252,7 +269,7 @@
 			$rows.each(function(newIndex) {
 				const newPosition = newIndex;
 				const $row = $(this);
-				$row.attr('id', `${settings.fieldName}_${newPosition}`);
+				$row.attr('id', `${settings.rowSelector}_${newPosition}`);
 				settings.reindexRowID.forEach(function(attrName) {
 					$row.find(`[${attrName}*="_"]`).each(function() {
 						const $element = $(this);
@@ -272,7 +289,6 @@
 			$rows.each(function(newIndex) {
 				const newPosition = newIndex;
 				const $row = $(this);
-				$row.attr('data-index', newPosition);
 				settings.reindexRowIndex.forEach(function(attrName) {
 					$row.find(`[${attrName}]`).each(function() {
 						const $element = $(this);
@@ -308,7 +324,7 @@
 				return this;
 			},
 			remove: function(index) {
-				const $removeBtn = $wrapper.find(`#${settings.fieldName}_${index} .${settings.removeSelector}`);
+				const $removeBtn = $wrapper.find(`#${settings.rowSelector}_${index} .${settings.removeClass}`);
 				if ($removeBtn.length) {
 					$removeBtn.trigger('click.remAddRow');
 				}
@@ -340,7 +356,7 @@
 				return {
 					fieldName: settings.fieldName,
 					rowSelector: settings.rowSelector,
-					removeSelector: settings.removeSelector,
+					removeClass: settings.removeClass,
 					maxRows: settings.maxRows,
 					currentIndex: i,
 					reindexConfig: {
@@ -354,7 +370,7 @@
 				if (settings.addBtn) {
 					$(settings.addBtn).off('click.remAddRow');
 				}
-				$wrapper.off('click.remAddRow', `.${settings.removeSelector}`);
+				$wrapper.off('click.remAddRow', `.${settings.removeClass}`);
 				this.reset();
 				return this;
 			}
