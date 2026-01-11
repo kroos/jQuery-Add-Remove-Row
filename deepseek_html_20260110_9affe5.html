@@ -43,7 +43,7 @@
 <body>
     <div class="container mt-5">
         <h1 class="mb-4">Complete remAddRow Plugin Example</h1>
-        
+
         <!-- Stats Display -->
         <div class="row stats">
             <div class="col-md-12">
@@ -64,7 +64,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Control Panel -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
@@ -82,7 +82,7 @@
                         <button type="button" id="manualReindex" class="btn btn-secondary">Manual Reindex</button>
                     </div>
                 </div>
-                
+
                 <div class="row mb-3">
                     <div class="col-md-12">
                         <h5>Configuration Panel</h5>
@@ -98,7 +98,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-12">
                         <h5>Reindexing Configuration</h5>
@@ -106,7 +106,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Name Attributes (${fieldName}[${index}][field]):</label>
-                                    <input type="text" id="nameAttrs" class="form-control form-control-sm" 
+                                    <input type="text" id="nameAttrs" class="form-control form-control-sm"
                                            value="name,data-name,custom-field" placeholder="Comma separated">
                                     <small class="form-text text-muted">Pattern: users[0][name]</small>
                                 </div>
@@ -114,7 +114,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>ID Attributes (userdefine_${index}):</label>
-                                    <input type="text" id="idAttrs" class="form-control form-control-sm" 
+                                    <input type="text" id="idAttrs" class="form-control form-control-sm"
                                            value="id,for,data-target,aria-labelledby" placeholder="Comma separated">
                                     <small class="form-text text-muted">Pattern: name_0, skill_1</small>
                                 </div>
@@ -122,7 +122,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Index Attributes ([${index}]):</label>
-                                    <input type="text" id="indexAttrs" class="form-control form-control-sm" 
+                                    <input type="text" id="indexAttrs" class="form-control form-control-sm"
                                            value="data-index,data-row,data-id,row-index" placeholder="Comma separated">
                                     <small class="form-text text-muted">Pattern: data-index="0"</small>
                                 </div>
@@ -133,7 +133,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Main Content Area -->
         <div class="row">
             <div class="col-sm-12 m-0 my-2">
@@ -144,7 +144,7 @@
             </div>
             <div id="rowWrapper" class="col-sm-12 m-0 my-2"></div>
         </div>
-        
+
         <!-- Debug Output -->
         <div class="card mt-4">
             <div class="card-header bg-dark text-white">
@@ -167,12 +167,12 @@
 
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <!-- Our Plugin -->
-    <script src="remAddRow.js"></script>
-    
+    <script src="addRemoveRowjQueryPlugins.js"></script>
+
     <script>
         $(document).ready(function() {
             // Log function
@@ -182,14 +182,14 @@
                 $('#consoleOutput').prepend(`<div class="${typeClass}"><strong>[${time}]</strong> ${message}</div>`);
                 console.log(`[${type.toUpperCase()}] ${message}`);
             }
-            
+
             // Update stats display
             function updateStats(action = '', index = '') {
                 $('#lastAction').text(action || 'None');
                 $('#lastIndex').text(index !== '' ? index : '-');
                 $('#totalAdded').text(window.totalAdded || 0);
             }
-            
+
             // Update form data display
             function updateFormData() {
                 const data = {};
@@ -207,46 +207,46 @@
                 });
                 $('#formDataOutput').text(JSON.stringify(data, null, 2));
             }
-            
+
             // Global counter for total added rows
             window.totalAdded = 0;
-            
+
             // Custom HTML Template Function
             function customRowTemplate(index, settings) {
                 return `
-                    <div id="${settings.fieldName}_${index}" 
-                         class="row m-0 custom-row custom-row-class" 
+                    <div id="${settings.fieldName}_${index}"
+                         class="row m-0 custom-row custom-row-class"
                          data-index="${index}"
                          data-row="${index}"
                          data-id="${index + 1000}"
                          data-custom="row-${index}">
-                        
-                        <input type="hidden" 
-                               name="${settings.fieldName}[${index}][id]" 
+
+                        <input type="hidden"
+                               name="${settings.fieldName}[${index}][id]"
                                value="ID-${index + 1000}"
                                data-name="${settings.fieldName}_id_${index}"
                                custom-field="hidden_${index}">
-                        
+
                         <div class="col-md-12 mb-2">
                             <h5 class="border-bottom pb-2">
-                                <i class="fas fa-user text-primary"></i> 
+                                <i class="fas fa-user text-primary"></i>
                                 User Profile #<span class="highlight">${index}</span>
                                 <small class="float-right text-muted">ID: <span class="highlight">${index + 1000}</span></small>
                             </h5>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name_${index}" 
+                                <label for="name_${index}"
                                        class="font-weight-bold"
                                        data-target="name-label-${index}"
                                        aria-labelledby="name_${index}">
                                     <i class="fas fa-signature"></i> Full Name:
                                 </label>
-                                <input type="text" 
-                                       name="${settings.fieldName}[${index}][name]" 
+                                <input type="text"
+                                       name="${settings.fieldName}[${index}][name]"
                                        value="User ${index}"
-                                       id="name_${index}" 
+                                       id="name_${index}"
                                        class="form-control form-control-custom"
                                        placeholder="Enter full name"
                                        data-index="${index}"
@@ -254,28 +254,28 @@
                                        custom-field="name_${index}"
                                        data-name="${settings.fieldName}_name_${index}">
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="email_${index}" class="font-weight-bold">
                                     <i class="fas fa-envelope"></i> Email Address:
                                 </label>
-                                <input type="email" 
-                                       name="${settings.fieldName}[${index}][email]" 
+                                <input type="email"
+                                       name="${settings.fieldName}[${index}][email]"
                                        value="user${index}@example.com"
-                                       id="email_${index}" 
+                                       id="email_${index}"
                                        class="form-control form-control-custom"
                                        placeholder="Enter email"
                                        data-index="${index}">
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="experience_${index}" class="font-weight-bold">
                                     <i class="fas fa-chart-line"></i> Experience Level:
                                 </label>
-                                <select name="${settings.fieldName}[${index}][experience]" 
-                                        id="experience_${index}" 
+                                <select name="${settings.fieldName}[${index}][experience]"
+                                        id="experience_${index}"
                                         class="form-control form-control-custom"
                                         data-index="${index}">
                                     <option value="beginner">Beginner</option>
@@ -284,28 +284,28 @@
                                     <option value="expert">Expert</option>
                                 </select>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="skills_${index}" class="font-weight-bold">
                                     <i class="fas fa-cogs"></i> Skills (comma separated):
                                 </label>
-                                <input type="text" 
-                                       name="${settings.fieldName}[${index}][skills]" 
+                                <input type="text"
+                                       name="${settings.fieldName}[${index}][skills]"
                                        value="HTML, CSS, JavaScript"
-                                       id="skills_${index}" 
+                                       id="skills_${index}"
                                        class="form-control form-control-custom"
                                        placeholder="e.g., HTML, CSS, JavaScript"
                                        data-index="${index}">
                             </div>
                         </div>
-                        
+
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label for="notes_${index}" class="font-weight-bold">
                                     <i class="fas fa-sticky-note"></i> Additional Notes:
                                 </label>
-                                <textarea name="${settings.fieldName}[${index}][notes]" 
-                                          id="notes_${index}" 
+                                <textarea name="${settings.fieldName}[${index}][notes]"
+                                          id="notes_${index}"
                                           class="form-control form-control-custom"
                                           placeholder="Enter any additional notes..."
                                           rows="2"
@@ -313,9 +313,9 @@
                                           data-row="${index}">Notes for user ${index}</textarea>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-12 text-right">
-                            <button type="button" 
+                            <button type="button"
                                     class="btn btn-danger custom-remove-btn ${settings.removeClass}"
                                     data-index="${index}"
                                     data-row="${index}"
@@ -327,11 +327,11 @@
                                 <i class="fas fa-fingerprint"></i> Row ID: <code>${settings.fieldName}_${index}</code>
                             </span>
                         </div>
-                        
+
                         <div class="col-md-12 mt-2 border-top pt-2">
                             <small class="text-muted">
-                                <i class="fas fa-info-circle"></i> 
-                                Attributes to reindex: 
+                                <i class="fas fa-info-circle"></i>
+                                Attributes to reindex:
                                 <span class="badge badge-info">name</span>
                                 <span class="badge badge-info">id</span>
                                 <span class="badge badge-info">for</span>
@@ -347,60 +347,60 @@
                     </div>
                 `;
             }
-            
+
             // Custom onAdd callback
             function onAddCallback(index, $row) {
                 window.totalAdded++;
                 log(`✅ Row ADDED at index ${index}. Total added: ${window.totalAdded}`, 'info');
                 updateStats('Added', index);
                 updateFormData();
-                
+
                 // Update row count
                 const count = plugin.getCount();
                 $('#rowCount').text(count);
-                
+
                 // Highlight the new row
                 $row.css('border-color', '#28a745');
                 setTimeout(() => {
                     $row.css('border-color', '#007bff');
                 }, 1000);
-                
+
                 // Log row details
                 log(`Row ${index} details: ID=${$row.attr('id')}, Fields: ${$row.find('input, select, textarea').length} elements`);
-                
+
                 // Add a custom data attribute
                 $row.attr('data-added-at', new Date().toISOString());
                 $row.attr('data-total-added', window.totalAdded);
             }
-            
+
             // Custom onRemove callback
             function onRemoveCallback(index, $row) {
                 log(`⚠️ Attempting to REMOVE row at index ${index}`, 'warning');
                 updateStats('Removing', index);
-                
+
                 // Example: Ask for confirmation (return false to prevent removal)
                 const confirmed = confirm(`Are you sure you want to remove row ${index}?\n\nUser: ${$row.find('input[name*="[name]"]').val()}`);
-                
+
                 if (!confirmed) {
                     log(`❌ Removal CANCELLED for row ${index}`, 'error');
                     updateStats('Cancelled', index);
                     return false; // This prevents removal
                 }
-                
+
                 log(`🗑️ Row ${index} REMOVED successfully`, 'info');
                 updateStats('Removed', index);
                 updateFormData();
-                
+
                 // Update row count
                 const count = plugin.getCount();
                 $('#rowCount').text(count);
-                
+
                 return true; // Allow removal
             }
-            
+
             // Initialize the plugin with ALL options
             log('Initializing remAddRow plugin with all options...', 'info');
-            
+
             const plugin = $('#rowWrapper').remAddRow({
                 // Basic Configuration
                 addButton: '#customAddBtn',
@@ -408,31 +408,31 @@
                 fieldName: 'users',
                 rowClass: 'custom-row-class',
                 removeClass: 'custom-remove-btn',
-                
+
                 // Advanced Configuration
                 reindexRowName: ['name', 'data-name', 'custom-field'],
                 reindexRowID: ['id', 'for', 'data-target', 'aria-labelledby'],
                 reindexRowIndex: ['data-index', 'data-row', 'data-id', 'row-index'],
-                
+
                 // Custom HTML Template
                 rowTemplate: customRowTemplate,
-                
+
                 // Event Callbacks
                 onAdd: onAddCallback,
                 onRemove: onRemoveCallback
             });
-            
+
             // Initialize stats
             $('#rowCount').text(plugin.getCount());
             $('#maxRows').text(7);
             updateStats('Initialized');
-            
+
             // Control Panel Event Handlers
             $('#addProgrammatic').click(function() {
                 log('Programmatically adding a row...', 'info');
                 plugin.add();
             });
-            
+
             $('#removeFirst').click(function() {
                 const count = plugin.getCount();
                 if (count > 0) {
@@ -442,7 +442,7 @@
                     log('No rows to remove!', 'error');
                 }
             });
-            
+
             $('#removeLast').click(function() {
                 const count = plugin.getCount();
                 if (count > 0) {
@@ -453,7 +453,7 @@
                     log('No rows to remove!', 'error');
                 }
             });
-            
+
             $('#resetAll').click(function() {
                 log('Resetting all rows...', 'warning');
                 plugin.reset();
@@ -462,14 +462,14 @@
                 updateFormData();
                 $('#rowCount').text(0);
             });
-            
+
             $('#manualReindex').click(function() {
                 log('Manually triggering reindex...', 'info');
                 plugin.reindexAll();
                 updateFormData();
                 log('Manual reindex completed!', 'info');
             });
-            
+
             $('#updateFieldName').click(function() {
                 const newFieldName = $('#fieldNameInput').val();
                 if (newFieldName && newFieldName !== plugin.getConfig().fieldName) {
@@ -479,7 +479,7 @@
                     alert('Field name change would require plugin reinitialization. This feature requires enhancement.');
                 }
             });
-            
+
             $('#updateMaxRows').click(function() {
                 const newMaxRows = parseInt($('#maxRowsInput').val());
                 if (newMaxRows > 0 && newMaxRows <= 20) {
@@ -488,29 +488,29 @@
                     log(`Max rows updated to: ${newMaxRows} (Note: Requires page refresh to take effect)`, 'info');
                 }
             });
-            
+
             $('#updateReindexConfig').click(function() {
                 const nameAttrs = $('#nameAttrs').val().split(',').map(s => s.trim()).filter(s => s);
                 const idAttrs = $('#idAttrs').val().split(',').map(s => s.trim()).filter(s => s);
                 const indexAttrs = $('#indexAttrs').val().split(',').map(s => s.trim()).filter(s => s);
-                
+
                 plugin.setReindexConfig('name', nameAttrs)
                       .setReindexConfig('id', idAttrs)
                       .setReindexConfig('index', indexAttrs);
-                
+
                 log(`Reindex config updated:`, 'info');
                 log(`  Name attributes: ${nameAttrs.join(', ')}`, 'info');
                 log(`  ID attributes: ${idAttrs.join(', ')}`, 'info');
                 log(`  Index attributes: ${indexAttrs.join(', ')}`, 'info');
-                
+
                 // Show current config
                 showCurrentConfig();
             });
-            
+
             $('#showConfig').click(function() {
                 showCurrentConfig();
             });
-            
+
             // Show initial config
             function showCurrentConfig() {
                 const config = plugin.getConfig();
@@ -525,21 +525,21 @@
                 log(`Index Attributes: ${config.reindexConfig.index.join(', ')}`, 'info');
                 log('====================================', 'info');
             }
-            
+
             // Add a few rows initially for demonstration
             setTimeout(() => {
                 log('Adding initial demo rows...', 'info');
                 plugin.add();
                 plugin.add();
                 plugin.add();
-                
+
                 // Show initial config
                 showCurrentConfig();
-                
+
                 // Initial form data
                 updateFormData();
             }, 500);
-            
+
             // Keyboard shortcuts
             $(document).keydown(function(e) {
                 // Ctrl+A to add row
@@ -560,7 +560,7 @@
                     plugin.reindexAll();
                 }
             });
-            
+
             // Log keyboard shortcuts
             log('Keyboard shortcuts:', 'info');
             log('  Ctrl+A: Add row', 'info');

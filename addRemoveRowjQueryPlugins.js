@@ -83,37 +83,38 @@
 
 		// Default settings
 		const defaults = {
-			addButton: '',
+			addBtn: '',
 			maxRows: 5,
+			startCounter: 0,
 			fieldName: 'data',
-			rowClass: 'rowserial',
-			removeClass: 'serial_remove',
+			rowSelector: 'rowserial',
+			removeSelector: 'serial_remove',
 			onAdd: null,
 			onRemove: null,
 			// Default reindexing patterns
-			reindexRowName: ['name'],
-			reindexRowID: ['id', 'for'],
-			reindexRowIndex: ['data-index']
+			reindexRowName: ['name', 'data-bv-field', 'data-bv-for'],
+			reindexRowID: ['id', 'for', 'aria-describedby'],
+			reindexRowIndex: ['data-index', 'data-id']
 		};
 
 		// Merge options
 		const settings = Object.assign({}, defaults, options);
 		const $wrapper = this;
-		let i = 0;
+		let i = settings.startCounter;
 
 		// Initialize
 		function init() {
 			// Count existing rows (0-based index)
-			i = $wrapper.find(`.${settings.rowClass}`).length;
+			i = $wrapper.find(`.${settings.rowSelector}`).length;
 
 			// Attach click event to add button
-			if (settings.addButton) {
-				$(settings.addButton).off('click.remAddRow').on('click.remAddRow', addRow);
+			if (settings.addBtn) {
+				$(settings.addBtn).off('click.remAddRow').on('click.remAddRow', addRow);
 			}
 
 			// Delegate remove button events
-			$wrapper.off('click.remAddRow', `.${settings.removeClass}`)
-			.on('click.remAddRow', `.${settings.removeClass}`, removeRow);
+			$wrapper.off('click.remAddRow', `.${settings.removeSelector}`)
+			.on('click.remAddRow', `.${settings.removeSelector}`, removeRow);
 
 			return methods;
 		}
@@ -150,11 +151,11 @@
 
 			// Default template
 			return `
-				<div id="${settings.fieldName}_${index}" class="row m-0 ${settings.rowClass}" data-index="${index}">
+				<div id="${settings.rowSelector}_${index}" class="row m-0 ${settings.rowSelector}">
 					<input type="hidden" name="${settings.fieldName}[${index}][id]" value="">
 
 					<div class="form-group row m-0">
-						<label for="name_${index}" class="col-form-label col-sm-4">Name #${index} : </label>
+						<label for="name_${index}" class="col-form-label col-sm-4">Name : </label>
 						<div class="col-sm-8 my-auto">
 							<input type="text"
 									 name="${settings.fieldName}[${index}][name]"
@@ -166,7 +167,7 @@
 					</div>
 
 					<div class="form-group row m-0">
-						<label for="skill_${index}" class="col-form-label col-sm-4">Skill #${index} : </label>
+						<label for="skill_${index}" class="col-form-label col-sm-4">Skill : </label>
 						<div class="col-sm-8 my-auto">
 							<input type="text"
 									 name="${settings.fieldName}[${index}][skill]"
@@ -179,7 +180,7 @@
 
 					<div class="col-sm-4 m-0">
 						<button type="button"
-								class="btn btn-sm btn-outline-danger ${settings.removeClass}"
+								class="btn btn-sm btn-outline-danger ${settings.removeSelector}"
 								data-index="${index}">Remove</button>
 					</div>
 				</div>
@@ -194,7 +195,7 @@
 
 			// Fallback: try to find row by traversing DOM
 			if (!$row.length) {
-				$row = $button.closest(`.${settings.rowClass}`);
+				$row = $button.closest(`.${settings.rowSelector}`);
 			}
 
 			if ($row.length) {
@@ -223,7 +224,7 @@
 		// Reindex functions (unchanged)
 		const reindexRowNamePattern = function() {
 			if (!settings.reindexRowName || !settings.reindexRowName.length) return;
-			const $rows = $wrapper.find(`.${settings.rowClass}`);
+			const $rows = $wrapper.find(`.${settings.rowSelector}`);
 			$rows.each(function(newIndex) {
 				const newPosition = newIndex;
 				const $row = $(this);
@@ -247,7 +248,7 @@
 
 		const reindexRowIDPattern = function() {
 			if (!settings.reindexRowID || !settings.reindexRowID.length) return;
-			const $rows = $wrapper.find(`.${settings.rowClass}`);
+			const $rows = $wrapper.find(`.${settings.rowSelector}`);
 			$rows.each(function(newIndex) {
 				const newPosition = newIndex;
 				const $row = $(this);
@@ -267,7 +268,7 @@
 
 		const reindexRowIndexPattern = function() {
 			if (!settings.reindexRowIndex || !settings.reindexRowIndex.length) return;
-			const $rows = $wrapper.find(`.${settings.rowClass}`);
+			const $rows = $wrapper.find(`.${settings.rowSelector}`);
 			$rows.each(function(newIndex) {
 				const newPosition = newIndex;
 				const $row = $(this);
@@ -286,7 +287,7 @@
 
 		// Master reindex function
 		const reindexRowAll = function() {
-			const $rows = $wrapper.find(`.${settings.rowClass}`);
+			const $rows = $wrapper.find(`.${settings.rowSelector}`);
 			if ($rows.length === 0) return;
 
 			// Reindex all attributes
@@ -307,7 +308,7 @@
 				return this;
 			},
 			remove: function(index) {
-				const $removeBtn = $wrapper.find(`#${settings.fieldName}_${index} .${settings.removeClass}`);
+				const $removeBtn = $wrapper.find(`#${settings.fieldName}_${index} .${settings.removeSelector}`);
 				if ($removeBtn.length) {
 					$removeBtn.trigger('click.remAddRow');
 				}
@@ -317,7 +318,7 @@
 				return i;
 			},
 			reset: function() {
-				$wrapper.find(`.${settings.rowClass}`).remove();
+				$wrapper.find(`.${settings.rowSelector}`).remove();
 				i = 0;
 				return this;
 			},
@@ -338,8 +339,8 @@
 			getConfig: function() {
 				return {
 					fieldName: settings.fieldName,
-					rowClass: settings.rowClass,
-					removeClass: settings.removeClass,
+					rowSelector: settings.rowSelector,
+					removeSelector: settings.removeSelector,
 					maxRows: settings.maxRows,
 					currentIndex: i,
 					reindexConfig: {
@@ -350,10 +351,10 @@
 				};
 			},
 			destroy: function() {
-				if (settings.addButton) {
-					$(settings.addButton).off('click.remAddRow');
+				if (settings.addBtn) {
+					$(settings.addBtn).off('click.remAddRow');
 				}
-				$wrapper.off('click.remAddRow', `.${settings.removeClass}`);
+				$wrapper.off('click.remAddRow', `.${settings.removeSelector}`);
 				this.reset();
 				return this;
 			}
@@ -376,7 +377,7 @@
 
 /*
 			$('#serial_wrap').remAddRow({
-				addButton: '#serial_add',
+				addBtn: '#serial_add',
 				maxRows: 5,
 				fieldName: 'per',
 				reindexRowName: ['data-name'],	// pattern => ${name}[${i}][product]

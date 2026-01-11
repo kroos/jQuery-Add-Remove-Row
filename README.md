@@ -56,8 +56,8 @@ import $ from "./addRemoveRowjQueryPlugins.js";
 ### JavaScript
 
 ```javascript
-$('#rowsWrapper').remAddRow({
-  addBtn: '#addRowBtn',
+$('#serial_wrap').remAddRow({
+  addBtn: '#serial_add',
 });
 ```
 
@@ -72,15 +72,19 @@ You can pass options to customize the behavior:
 | Option | Type | Default | Description |
 |--------|------|----------|-------------|
 | `addBtn` | `string \| jQuery` | `null` | Selector for the “Add” button (**required**) |
-| `maxFields` | `number` | `10` | Maximum number of rows allowed |
-| `removeSelector` | `string` | `.row_remove` | Selector for the remove button inside each row |
-| `fieldName` | `string` | `"rows"` | Base name for form field groups (`rows[0], rows[1], ...`) |
-| `rowIdPrefix` | `string` | `"row"` | Prefix for each row’s `id` (e.g. `row_0`, `row_1`) |
-| `reindexOnRemove` | `boolean` | `true` | Whether to reindex fields and IDs after removing a row |
-| `rowTemplate(i, name)` | `function` | *(default template)* | Function returning the HTML for a new row |
+| `maxRows` | `number` | `10` | Maximum number of rows allowed |
+| `rowSelector` | `string` | `rowSkill` | A word for selector for each row. Can be both(class or id) |
+| `fieldName` | `string` | `"persons"` | Base name for form field groups (`persons[0][name], persons[1][name], ...`) |
+| `removeSelector` | `string` | `"row"` | Selector class to remove a row |
+| `reindexOnRemove` | `boolean` | `return true` | Reindex all rows after removing a row (`return true`) |
+| `rowTemplate` | `function` | `(i, name) => {}` *(default template)* | Function returning the HTML for a new row |
 | `startCounter` | `number` | `0` | Optional offset for numbering |
-| `onAdd(i, event, $row, name)` | `function` | `() => {}` | Callback fired after a row is added |
-| `onRemove(i, event, $row, name)` | `function` | `() => {}` | Callback fired before a row is removed |
+| `onAdd` | `function` | `(i, event, $row, name) => {}` | Callback fired after a row is added |
+| `onRemove` | `function` | `(i, event, $row, name) => {}` | Callback fired before a row is removed |
+| `reindexOnRemove` | `boolean` | `return false` | Halt remove a row and reindexing (`return false`) |
+| `reindexRowName` | `array` | `['name', 'data-bv-field', 'data-bv-for']` | An array for attributes with ONLY `${name}[${i}][name]` (`data-bv-for="person[0][name]"`) pattern to reindex after a row removal |
+| `reindexRowID` | `array` | `['id', 'for']` | An array for attributes with ONLY `userdefine_${i}` (`id="skill_3"`) pattern to reindex after a row removal |
+| `reindexRowIndex` | `array` | `['data-index']` | An array for attributes with ONLY `${i}` (`data-index="7"`) pattern to reindex after a row removal |
 
 ---
 
@@ -89,10 +93,38 @@ You can pass options to customize the behavior:
 By default, each new row looks like this:
 
 ```html
-<div class="row-box" id="row_0">
-  <span data-row-index>Row #1</span>
-  <input type="text" name="rows[0]" />
-  <button type="button" class="row_remove" data-id="0">Remove</button>
+<div id="${settings.rowSelector}_${index}" class="row m-0 ${settings.rowSelector}">
+  <input type="hidden" name="${settings.fieldName}[${index}][id]" value="">
+
+  <div class="form-group row m-0">
+    <label for="name_${index}" class="col-form-label col-sm-4">Name : </label>
+    <div class="col-sm-8 my-auto">
+      <input type="text"
+           name="${settings.fieldName}[${index}][name]"
+           value=""
+           id="name_${index}"
+           class="form-control form-control-sm"
+           placeholder="Name">
+    </div>
+  </div>
+
+  <div class="form-group row m-0">
+    <label for="skill_${index}" class="col-form-label col-sm-4">Skill : </label>
+    <div class="col-sm-8 my-auto">
+      <input type="text"
+           name="${settings.fieldName}[${index}][skill]"
+           value=""
+           id="skill_${index}"
+           class="form-control form-control-sm"
+           placeholder="Skill">
+    </div>
+  </div>
+
+  <div class="col-sm-4 m-0">
+    <button type="button"
+        class="btn btn-sm btn-outline-danger ${settings.removeSelector}"
+        data-index="${index}">Remove</button>
+  </div>
 </div>
 ```
 
@@ -101,11 +133,13 @@ You can fully customize it with the `rowTemplate` option:
 ```javascript
 $('#rowsWrapper').remAddRow({
   addBtn: '#addRowBtn',
+  rowSelector: 'custom-row',
+  removeSelector: 'row_remove',
   rowTemplate: (i, name) => `
-    <div class="custom-row" id="custom_${i}">
-      <label>Item ${i + 1}</label>
+    <div class="custom-row" id="custom-row_${i}">
+      <label>Item</label>
       <input type="text" name="${name}[${i}]" placeholder="Enter text..." />
-      <button class="btn btn-danger row_remove" data-id="${i}">✖</button>
+      <button class="btn btn-danger row_remove" data-index="${i}">✖</button>
     </div>
   `,
 });
@@ -115,11 +149,12 @@ $('#rowsWrapper').remAddRow({
 $("#applicants_wrap").remAddRow({
     addBtn: "#applicants_add",
     maxFields: 5,
+    rowSelector: 'applicant',
     removeSelector: ".applicant_remove",
     fieldName: "applicants",
     rowIdPrefix: "applicant",
     rowTemplate: (i, name) => `
-        <div class="col-sm-12 row m-3" id="applicant_${i}">
+        <div class="applicant col-sm-12 row m-3" id="applicant_${i}">
             <input type="hidden" name="${name}[${i}][id]" value="">
             <div class="col-sm-7 m-0 p-1">
 
@@ -145,13 +180,10 @@ $("#applicants_wrap").remAddRow({
         selectname(i);
     },
     onRemove: (i, event, $row, name) => {
-        event.preventDefault();
-
-        const idv = $row.find(`input[name="${name}[${i}][id]"]`).val();
+        const idv = $row.find(`[name="${name}[${i}][id]"]`).val();
         console.log(idv);
         if (!idv) {
-            $row.remove();
-            return;
+            return true;  // ✅ ALLOW removal (reindexing will happen)
         }
         swal.fire({
             title: 'Delete applicant?',
@@ -165,10 +197,12 @@ $("#applicants_wrap").remAddRow({
                 $.ajax({
                     url: `/applicants/${idv}`,
                     type: 'DELETE',
-                    data: { _token: $('meta[name="csrf-token"]').attr('content') },
+                    data: {
+                      _token: $('meta[name="csrf-token"]').attr('content')
+                    },
                     success: response => {
                         swal.fire('Deleted!', response.message, 'success');
-                        $row.remove();  // remove only after DB deletion
+                        return true;  // ✅ ALLOW removal (reindexing will happen)
                     },
                     error: xhr => {
                         swal.fire('Error', 'Failed to delete applicant', 'error');
@@ -262,20 +296,13 @@ $('#dynamicForm').on('submit', function (e) {
 
 ---
 
-## 🧩 Live Demo Example
-
-You can test it directly on CodePen or JSFiddle:
-👉 [Live Demo (CodePen)](https://codepen.io/pen?template=ExVwVyw)
-
----
-
 ## 💻 Laravel Blade Integration Example
 
 ```blade
 <form method="POST" action="{{ route('users.store') }}">
   @csrf
   <div id="rowsWrapper">
-    <!-- Existing rows can go here -->
+    <!-- Existing rows can go here via old() -->
   </div>
 
   <button id="addRowBtn" type="button" class="btn btn-primary">Add Row</button>
@@ -289,12 +316,13 @@ You can test it directly on CodePen or JSFiddle:
 $('#rowsWrapper').remAddRow({
   addBtn: '#addRowBtn',
   fieldName: 'users',
+  rowSelector: 'user',
   rowTemplate: (i, name) => `
-    <div class="mb-2 p-2 border rounded" id="user_${i}">
+    <div class="user mb-2 p-2 border rounded" id="user_${i}">
       <label>User ${i + 1}</label>
       <input type="text" name="${name}[${i}][name]" class="form-control mb-1" placeholder="Full name">
       <input type="email" name="${name}[${i}][email]" class="form-control mb-1" placeholder="Email">
-      <button type="button" class="btn btn-sm btn-danger row_remove" data-id="${i}">Remove</button>
+      <button type="button" class="btn btn-sm btn-danger row_remove" data-index="${i}">Remove</button>
     </div>
   `
 });
