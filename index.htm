@@ -17,7 +17,7 @@
 					class="img-fluid rounded"
 					style="width:5%;"
 				>
-			<a class="navbar-brand border border-danger" href="#">
+			<a class="navbar-brand" href="#">
 				Title
 			</a>
 			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,34 +60,21 @@
 	<!-- top nav end -->
 
 	<!-- content container -->
-	<div class="container-fluid flex-fill border border-success">
-		<div class="row d-flex flex-column flex-fill border border-danger">
-			<div class="col-sm-2 flex-fill border border-danger">
+	<div class="container d-flex flex-fill border border-success">
+		<div class="col-sm-12 m-0 mx-auto d-flex justify-content-between border border-danger">
+			<div class="col-sm-2 p-2 border border-danger">
+				LET COLUMN
 			</div>
-			<div class="col-sm-8 border border-danger">
+			<div class="col-sm-8 p-2 border border-info">
 
-
-
-
-
-
-
-
-
-
-<div class="col-sm-12 m-0 my-2">
-	<button type="button" id="serial_add" class="btn btn-sm btn-outline-info">Add Row</button>
-</div>
-<div id="serial_wrap" class="col-sm-12 m-0 my-2"></div>
-
-
-
-
-
-
+				<div class="col-sm-12 m-0 my-2">
+					<button type="button" id="serial_add" class="btn btn-sm btn-outline-info">Add Row</button>
+				</div>
+				<div id="serial_wrap" class="col-sm-12 m-0 my-2"></div>
 
 			</div>
-			<div class="col-sm-2 flex-fill border border-danger">
+			<div class="col-sm-2 p-2 border border-danger">
+				RIGHT COLIMN
 			</div>
 		</div>
 	</div>
@@ -282,15 +269,17 @@ $(wrapper).on("click",".serial_remove", function(e){
 })
 */
 ///////////////////////////////////////////
-/*			$('#serial_wrap').remAddRow({
+/*
+			$('#serial_wrap').remAddRow({
 				addBtn: '#serial_add',
 				maxRows: 5,
 				fieldName: 'per',
+				rowSelector: 'rowserial',
 				reindexRowName: ['data-name'],	// pattern => ${name}[${i}][product]
 				reindexRowID: ['data-id-id'],		// pattern => userdefined_${i}
 				reindexRowIndex: ['row-index'],		// pattern => ${i}
 				rowTemplate: (i, name) => `
-	        <div id="${name}_${i}" class="row m-0 rowserial" data-index="${i}">
+	        <div id="rowserial_${i}" class="row m-0 rowserial">
 	            <div class="col-sm-5">
 	                <input type="text"
 	                       name="${name}[${i}][product]"
@@ -340,14 +329,29 @@ $(wrapper).on("click",".serial_remove", function(e){
 					console.log(`✅ Allowed removal of row ${index}`);
 					return true; // ✅ ALLOW removal (reindexing will happen)
 				}
-			});*/
-
+			});
+*/
 
 ///////////////////////////////////////////
+
 			$('#serial_wrap').remAddRow({
 				addBtn: '#serial_add',
+				rowSelector: 'test',
+				removeClass: 'remove',
+				rowTemplate: (i, name) => `
+					<div id="test_${i}" class="col-sm-8 my-2 d-flex justify-content-evenly m-0 test">
+						<span id="mi_${i}">Gerabah!!</span>
+						<button type="button" class="btn btn-sm btn-outline-danger remove" data-id="${i}">X</button>
+					</div>
+				`,
+				onAdd: (i, e, $row, name) => {
+					$(`#mi_${i}`).css({"color": "red", "border": "2px solid red"});
+				},
+				onRemove:(i, e, $row, name) => {
+					console.log(`Removing row id=${i} => `);
+					$(`#mi_${i}`).css({"color": "red", "border": "2px solid red"});
+				},
 			});
-
 
 
 

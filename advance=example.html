@@ -349,7 +349,8 @@
             }
 
             // Custom onAdd callback
-            function onAddCallback(index, $row) {
+            function onAddCallback(index, row) {
+                const $row = $(row); // ✅ FIX
                 window.totalAdded++;
                 log(`✅ Row ADDED at index ${index}. Total added: ${window.totalAdded}`, 'info');
                 updateStats('Added', index);
@@ -374,9 +375,10 @@
             }
 
             // Custom onRemove callback
-            function onRemoveCallback(index, $row) {
+            function onRemoveCallback(index, row) {
                 log(`⚠️ Attempting to REMOVE row at index ${index}`, 'warning');
                 updateStats('Removing', index);
+                const $row = $(row); // ✅ FIX
 
                 // Example: Ask for confirmation (return false to prevent removal)
                 const confirmed = confirm(`Are you sure you want to remove row ${index}?\n\nUser: ${$row.find('input[name*="[name]"]').val()}`);
@@ -403,10 +405,10 @@
 
             const plugin = $('#rowWrapper').remAddRow({
                 // Basic Configuration
-                addButton: '#customAddBtn',
+                addBtn: '#customAddBtn',
                 maxRows: 7,
                 fieldName: 'users',
-                rowClass: 'custom-row-class',
+                rowSelector: 'custom-row-class',
                 removeClass: 'custom-remove-btn',
 
                 // Advanced Configuration
@@ -516,7 +518,7 @@
                 const config = plugin.getConfig();
                 log('=== CURRENT PLUGIN CONFIGURATION ===', 'info');
                 log(`Field Name: ${config.fieldName}`, 'info');
-                log(`Row Class: ${config.rowClass}`, 'info');
+                log(`Row Class: ${config.rowSelector}`, 'info');
                 log(`Remove Class: ${config.removeClass}`, 'info');
                 log(`Max Rows: ${config.maxRows}`, 'info');
                 log(`Current Index: ${config.currentIndex}`, 'info');
