@@ -61,7 +61,7 @@ $('#serial_wrap').remAddRow({
 });
 ```
 
-That’s it! You now have a working add/remove system.
+That’s it! You now have a working add/remove system. Also support async and sync.
 
 ---
 
@@ -180,36 +180,47 @@ $("#applicants_wrap").remAddRow({
         selectname(i);
     },
     onRemove: (i, event, $row, name) => {
-        const idv = $row.find(`[name="${name}[${i}][id]"]`).val();
-        console.log(idv);
-        if (!idv) {
+        const dbId = $row.find(`[name="${name}[${i}][id]"]`).val();
+        console.log(dbId);
+        if (!dbId) {
             return true;  // ✅ ALLOW removal (reindexing will happen)
         }
-        swal.fire({
-            title: 'Delete applicant?',
-            text: 'This action cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-        }).then(result => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: `/applicants/${idv}`,
-                    type: 'DELETE',
-                    data: {
-                      _token: $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: response => {
-                        swal.fire('Deleted!', response.message, 'success');
-                        return true;  // ✅ ALLOW removal (reindexing will happen)
-                    },
-                    error: xhr => {
-                        swal.fire('Error', 'Failed to delete applicant', 'error');
-                    }
-                });
-            }
+        let url = `{{ url('slippostage') }}`;
+        const result = await swal.fire({
+          title: 'Are you sure?',
+          text: "It will be deleted permanently!",
+          type: 'warning',
+          showCancelButton: true,
+          allowOutsideClick: false,
+          showLoaderOnConfirm: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Yes, delete it!'
         });
+
+      // ❌ Cancel clicked
+        if (result.isDismissed) {
+          await swal.fire('Cancelled', 'Your data is safe from delete', 'info');
+          return false;
+        }
+
+      // 2️⃣ Perform AJAX delete
+        try {
+          const response = await $.ajax({
+            type: 'DELETE',
+            url: `${url}/${dbId}`,
+            data: {
+              _token: `{{ csrf_token() }}`,
+              id: dbId
+            },
+            dataType: 'json'
+          });
+          await swal.fire('Deleted!', response.message, response.status);
+        return true; // ✅ ALLOW plugin to remove row
+      } catch (e) {
+        await swal.fire('Ajax Error', 'Something went wrong with ajax!', 'error');
+        return false; // ❌ BLOCK removal
+      }
     }
 });
 
