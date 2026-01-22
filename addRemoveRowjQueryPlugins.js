@@ -219,7 +219,12 @@
 		// Remove a row
 		const removeRow = function(e) {
 			const $button = $(this);
-			const idIndex = $button.data('index') ?? $button.data('id');
+
+			// const idIndex = $button.data('index') ?? $button.data('id');
+
+	     const idIndex = $button.attr('data-index') ?? $button.attr('data-id');
+
+
 			let $row = $(`#${settings.rowSelector}_${idIndex}`, $wrapper);
 
 			if (!$row.length) {
@@ -340,18 +345,18 @@
 
 			$rows.each(function(newIndex) {
 
-				const newPosition = a + newIndex;
 
 				const $row = $(this);
 				settings.reindexRowIndex.forEach(attr => {
           $(this).find(`[${attr}]`).each(function () {
             const $el = $(this);
             const val = $el.attr(attr);
+						const newPosition = a + newIndex;
 
             if (!val) return;
 
             // Replace ONLY last numeric segment
-            $el.attr(attr, val.replace(/(\d+)$/, f));
+            $el.attr(attr, val.replace(/(\d+)$/, newPosition));
           });
         });
 			});
