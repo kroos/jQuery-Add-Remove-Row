@@ -89,6 +89,7 @@
 			fieldName: 'data',
 			rowSelector: 'rowserial',
 			removeClass: 'serial_remove',
+			nestedwrapper: null,
 			onAdd: null,
 			onRemove: null,
 			// Default reindexing patterns
@@ -123,10 +124,10 @@
 			// Count existing rows (0-based index)
 			// i = $wrapper.find(`.${settings.rowSelector}`).length ?? $wrapper.find(`#${settings.rowSelector}_${i}`).length ;
 
-      const y = Number(settings.startRow);
-      const x = Number($wrapper.find(`.${settings.rowSelector}`).length ?? $wrapper.find(`#${settings.rowSelector}_${i}`).length );
-      const i = y + x;
-      // console.log(i);
+			const y = Number(settings.startRow);
+			const x = Number($wrapper.find(`.${settings.rowSelector}`).length ?? $wrapper.find(`#${settings.rowSelector}_${i}`).length );
+			const i = y + x;
+			// console.log(i);
 
 			// Attach click event to add button
 			if (settings.addBtn) {
@@ -143,11 +144,11 @@
 		// Add a new row
 		const addRow = function(e) {
 
-      const a = Number(settings.startRow);
-      const b = Number(settings.maxRows);
-      const totalRows = a + b;
+			const a = Number(settings.startRow);
+			const b = Number(settings.maxRows);
+			const totalRows = a + b;
 
-      if (i >= totalRows) return false;
+			if (i >= totalRows) return false;
 
 			// if (i < settings.maxRows) {
 			if (i < totalRows) {
@@ -222,7 +223,7 @@
 
 			// const idIndex = $button.data('index') ?? $button.data('id');
 
-	     const idIndex = $button.attr('data-index') ?? $button.attr('data-id');
+			 const idIndex = $button.attr('data-index') ?? $button.attr('data-id');
 
 
 			let $row = $(`#${settings.rowSelector}_${idIndex}`, $wrapper);
@@ -262,105 +263,164 @@
 			return false;
 		};
 
-		// Reindex functions (unchanged)
-		const reindexRowNamePattern = function() {
-			if (!settings.reindexRowName || !settings.reindexRowName.length) return;
-			const $rows = $wrapper.find(`.${settings.rowSelector}`);
 
+
+		// Reindex functions (unchanged)
+
+		// 1️⃣ reindexRowNamePattern (Updated)
+		const reindexRowNamePattern = function () {
+			if (!settings.reindexRowName || !settings.reindexRowName.length) return;
+
+			const $rows = $wrapper.find(`.${settings.rowSelector}`);
 			const start = Number(settings.startRow);
 
-			$rows.each(function(newIndex) {
+			$rows.each(function (newIndex) {
 
 				const d = start + newIndex;
-
-				const newPosition = d;
 				const $row = $(this);
 
 				settings.reindexRowName.forEach(attr => {
-          $row.find(`[${attr}]`).each(function () {
-            const $el = $(this);
-            const val = $el.attr(attr);
 
-            if (!val) return;
+			/* ================================
+			 * OUTER (NOT inside nestedwrapper)
+			 * ================================ */
+					$row.find(`[${attr}]`)
+					.not($row.find(`${settings.nestedwrapper} *`))
+					.each(function () {
+						const $el = $(this);
+						const val = $el.attr(attr);
+						if (!val) return;
 
-            // special simple case
-            if (attr === 'index_pattern') {
-              $el.attr(attr, d);
-              return;
-            }
+						if (attr === 'index_pattern') {
+							$el.attr(attr, d);
+							return;
+						}
 
-            // Match ALL [...] segments
-            const matches = [...val.matchAll(/\[([^\]]+)\]/g)];
-            if (matches.length < 2) return;
+						const matches = [...val.matchAll(/\[([^\]]+)\]/g)];
+						if (matches.length < 2) return;
 
-            // index of 2nd last []
-            const target = matches[matches.length - 2];
+						const target = matches[matches.length - 2];
+						const before = val.slice(0, target.index);
+						const after  = val.slice(target.index + target[0].length);
 
-            // Replace ONLY that occurrence
-            const before = val.slice(0, target.index);
-            const after  = val.slice(target.index + target[0].length);
+						$el.attr(attr, `${before}[${d}]${after}`);
+					});
 
-            $el.attr(attr, `${before}[${d}]${after}`);
-          });
-        });
+			/* ================================
+			 * INNER (inside nestedwrapper)
+			 * ================================ */
+					$row.find(settings.nestedwrapper)
+					.find(`[${attr}]`)
+					.each(function () {
+						const $el = $(this);
+						const val = $el.attr(attr);
+						if (!val) return;
+
+						const matches = [...val.matchAll(/\[([^\]]+)\]/g)];
+						if (matches.length < 4) return;
+
+						const target = matches[matches.length - 4];
+						const before = val.slice(0, target.index);
+						const after  = val.slice(target.index + target[0].length);
+
+						$el.attr(attr, `${before}[${d}]${after}`);
+					});
+
+				});
 			});
 		};
 
-		const reindexRowIDPattern = function() {
+		// 2️⃣ reindexRowIDPattern (Updated)
+		const reindexRowIDPattern = function () {
 			if (!settings.reindexRowID || !settings.reindexRowID.length) return;
+
 			const $rows = $wrapper.find(`.${settings.rowSelector}`);
+			const a = Number(settings.startRow);
 
-      const a = Number(settings.startRow);
-
-			$rows.each(function(newIndex) {
+			$rows.each(function (newIndex) {
 
 				const newPosition = a + newIndex;
-
 				const $row = $(this);
 
+		// reindex row id itself
 				$row.attr('id', `${settings.rowSelector}_${newPosition}`);
 
 				settings.reindexRowID.forEach(attr => {
-          $row.find(`[${attr}]`).each(function () {
-            const $el = $(this);
-            const val = $el.attr(attr);
 
-            if (!val) return;
+			/* ================================
+			 * OUTER (NOT inside nestedwrapper)
+			 * ================================ */
+					$row.find(`[${attr}]`)
+					.not($row.find(`${settings.nestedwrapper} *`))
+					.each(function () {
+						const $el = $(this);
+						const val = $el.attr(attr);
+						if (!val) return;
 
-            // Replace ONLY last "_<number>"
-            $el.attr(
-                     attr,
-                     val.replace(/_(\d+)$/, `_${newPosition}`)
-                     );
-          });
-        });
+						$el.attr(attr, val.replace(/_(\d+)$/, `_${newPosition}`));
+					});
+
+			/* ================================
+			 * INNER (inside nestedwrapper)
+			 * ================================ */
+					$row.find(settings.nestedwrapper)
+					.find(`[${attr}]`)
+					.each(function () {
+						const $el = $(this);
+						const val = $el.attr(attr);
+						if (!val) return;
+
+						$el.attr(attr, val.replace(/_(\d+)(?=_(\d+)$)/, `_${newPosition}`));
+					});
+
+				});
 			});
 		};
 
-		const reindexRowIndexPattern = function() {
+		// 3️⃣ reindexRowIndexPattern (Updated)
+		const reindexRowIndexPattern = function () {
 			if (!settings.reindexRowIndex || !settings.reindexRowIndex.length) return;
+
 			const $rows = $wrapper.find(`.${settings.rowSelector}`);
+			const a = Number(settings.startRow);
 
-      const a = Number(settings.startRow);
+			$rows.each(function (newIndex) {
 
-			$rows.each(function(newIndex) {
-
-
+				const newPosition = a + newIndex;
 				const $row = $(this);
+
 				settings.reindexRowIndex.forEach(attr => {
-          $(this).find(`[${attr}]`).each(function () {
-            const $el = $(this);
-            const val = $el.attr(attr);
-						const newPosition = a + newIndex;
 
-            if (!val) return;
+			/* ================================
+			 * OUTER (NOT inside nestedwrapper)
+			 * ================================ */
+					$row.find(`[${attr}]`)
+					.not($row.find(`${settings.nestedwrapper} *`))
+					.each(function () {
+						const $el = $(this);
+						const val = $el.attr(attr);
+						if (!val) return;
 
-            // Replace ONLY last numeric segment
-            $el.attr(attr, val.replace(/(\d+)$/, newPosition));
-          });
-        });
+						$el.attr(attr, val.replace(/(\d+)$/, newPosition));
+					});
+
+			/* ================================
+			 * INNER (inside nestedwrapper)
+			 * ================================ */
+					$row.find(settings.nestedwrapper)
+					.find(`[${attr}]`)
+					.each(function () {
+						const $el = $(this);
+						const val = $el.attr(attr);
+						if (!val) return;
+
+						$el.attr(attr, val.replace(/(\d+)(?=_(\d+)$)/, newPosition));
+					});
+
+				});
 			});
 		};
+
 
 		// Master reindex function
 		const reindexRowAll = function() {
