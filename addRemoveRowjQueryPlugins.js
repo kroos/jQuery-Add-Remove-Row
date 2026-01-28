@@ -330,49 +330,92 @@
 			});
 		};
 
+
 		// 2️⃣ reindexRowIDPattern (Updated)
 		const reindexRowIDPattern = function () {
 			if (!settings.reindexRowID || !settings.reindexRowID.length) return;
 
 			const $rows = $wrapper.find(`.${settings.rowSelector}`);
-			const a = Number(settings.startRow);
+			const start = Number(settings.startRow);
 
 			$rows.each(function (newIndex) {
 
-				const newPosition = a + newIndex;
+				const e = start + newIndex;
 				const $row = $(this);
 
-		// reindex row id itself
-				$row.attr('id', `${settings.rowSelector}_${newPosition}`);
+				/* ================================
+				 * 1) REINDEX ROW ITSELF
+				 * ================================ */
+				$row.attr('id', `${settings.rowSelector}_${e}`);
 
 				settings.reindexRowID.forEach(attr => {
 
-			/* ================================
-			 * OUTER (NOT inside nestedwrapper)
-			 * ================================ */
+						/* ================================
+						 * 2) OUTER ATTR REINDEX
+						 * Replace LAST _<num>
+						 * ================================ */
 					$row.find(`[${attr}]`)
 					.not($row.find(`${settings.nestedwrapper} *`))
 					.each(function () {
+
 						const $el = $(this);
 						const val = $el.attr(attr);
 						if (!val) return;
 
-						$el.attr(attr, val.replace(/_(\d+)$/, `_${newPosition}`));
+						$el.attr(attr, val.replace(/_(\d+)$/, `_${e}`));
 					});
 
-			/* ================================
-			 * INNER (inside nestedwrapper)
-			 * ================================ */
+						/* ================================
+						 * 3) INNER ATTR REINDEX
+						 * Replace SECOND-LAST _<num>
+						 * Example:
+						 *   rowserial_501_10 → rowserial_500_10
+						 * ================================ */
 					$row.find(settings.nestedwrapper)
 					.find(`[${attr}]`)
 					.each(function () {
+
 						const $el = $(this);
 						const val = $el.attr(attr);
 						if (!val) return;
 
-						$el.attr(attr, val.replace(/_(\d+)(?=_(\d+)$)/, `_${newPosition}`));
-					});
+						const updated = val.replace(
+						                            /_(\d+)(?=_(\d+)$)/,
+						                          `_${e}`
+						                          );
 
+						$el.attr(attr, updated);
+					});
+				});
+
+				/* ================================
+				 * 4) NESTED CLASS FIX (CORRECT PLACE)
+				 * ================================ */
+
+				const $nestedWrap = $row.find(settings.nestedwrapper);
+
+				// rowserial_502 → rowserial_501
+				const rowRe = new RegExp(`${settings.rowSelector}_(\\d+)`, 'g');
+
+				$nestedWrap.find(`[class*="${settings.rowSelector}_"]`).each(function () {
+
+					const $el = $(this);
+					const cls = $el.attr('class');
+					if (!cls) return;
+
+					$el.attr('class', cls.replace(rowRe, `${settings.rowSelector}_${e}`));
+				});
+
+				// serial_remove_502 → serial_remove_501
+				const removeRe = new RegExp(`${settings.removeClass}_(\\d+)`, 'g');
+
+				$nestedWrap.find(`[class*="${settings.removeClass}_"]`).each(function () {
+
+					const $el = $(this);
+					const cls = $el.attr('class');
+					if (!cls) return;
+
+					$el.attr('class', cls.replace(removeRe, `${settings.removeClass}_${e}`));
 				});
 			});
 		};
