@@ -1,517 +1,4 @@
-(function($) {
-  'use strict';
-
-  // Plugin definition
-  $.fn.remAddRow = function(options) {
-    // Make sure we have elements to work with
-    if (!this.length) {
-      console.warn('remAddRow: No elements found');
-      return this;
-    }
-
-    // Default settings
-    const defaults = {
-      addBtn: '',
-      maxRows: 5,
-      startRow: 0,
-      fieldName: 'data',
-      rowSelector: 'rowserial',
-      removeClass: 'serial_remove',
-      nestedwrapper: null,
-      onAdd: null,
-      onRemove: null,
-      // Default reindexing patterns
-      reindexRowName: ['name', 'data-bv-field', 'data-bv-for'],
-      reindexRowID: ['id', 'for', 'aria-describedby'],
-      reindexRowIndex: ['data-index', 'data-id']
-    };
-
-    // Merge options
-    const settings = Object.assign({}, defaults, options);
-
-    // custom
-    // 🔹 Smart merge for reindex arrays
-    ['reindexRowName', 'reindexRowID', 'reindexRowIndex'].forEach(key => {
-      if (key in options) {
-        // If user explicitly sets it (even empty), respect it
-        settings[key] = Array.isArray(options[key])
-        ? [...new Set([...(defaults[key] || []), ...options[key]])]
-        : options[key];
-      } else {
-        // User did NOT provide it → keep defaults
-        settings[key] = [...(defaults[key] || [])];
-      }
-    });
-
-    const $wrapper = this;
-    let i = settings.startRow;
-
-    // Initialize
-    function init() {
-
-      // Count existing rows (0-based index)
-      // i = $wrapper.find(`.${settings.rowSelector}`).length ?? $wrapper.find(`#${settings.rowSelector}_${i}`).length ;
-
-      const y = Number(settings.startRow);
-      const x = Number($wrapper.find(`.${settings.rowSelector}`).length ?? $wrapper.find(`#${settings.rowSelector}_${i}`).length );
-      const i = y + x;
-      // console.log(i);
-
-      // Attach click event to add button
-      if (settings.addBtn) {
-        $(settings.addBtn).off('click.remAddRow').on('click.remAddRow', addRow);
-      }
-
-      // Delegate remove button events
-      $wrapper.off('click.remAddRow', `.${settings.removeClass}`)
-      .on('click.remAddRow', `.${settings.removeClass}`, removeRow);
-
-      return methods;
-    }
-
-    // Add a new row
-    const addRow = function(e) {
-
-      const a = Number(settings.startRow);
-      const b = Number(settings.maxRows);
-      const totalRows = a + b;
-
-      if (i >= totalRows) return false;
-
-      // if (i < settings.maxRows) {
-      if (i < totalRows) {
-        const currentIndex = i;
-        const rowHTML = createRowHTML(currentIndex);
-        $wrapper.append(rowHTML);
-        i++;
-
-        // Callback with your signature: (index, event, $row, name)
-        if (typeof settings.onAdd === 'function') {
-          const $newRow = $(`#${settings.rowSelector}_${currentIndex}`, $wrapper);
-          settings.onAdd(currentIndex, e, $newRow, settings.fieldName);
-        }
-
-        if (e && e.preventDefault) {
-          e.preventDefault();
-        }
-      } else {
-        console.log(`Maximum rows reached: ${settings.maxRows}`);
-      }
-      return false;
-    };
-
-    // Create row HTML - uses your template function
-    const createRowHTML = function(index) {
-      // Use custom template if provided (with your signature: (i, name))
-      if (typeof settings.rowTemplate === 'function') {
-        return settings.rowTemplate(index, settings.fieldName);
-      }
-
-      // Default template
-      return `
-        <div id="${settings.rowSelector}_${index}" class="row m-0 ${settings.rowSelector}">
-          <input type="hidden" name="${settings.fieldName}[${index}][id]" value="">
-
-          <div class="form-group row m-0">
-            <label for="name_${index}" class="col-form-label col-sm-4">Name : </label>
-            <div class="col-sm-8 my-auto">
-              <input type="text"
-                   name="${settings.fieldName}[${index}][name]"
-                   value=""
-                   id="name_${index}"
-                   class="form-control form-control-sm"
-                   placeholder="Name">
-            </div>
-          </div>
-
-          <div class="form-group row m-0">
-            <label for="skill_${index}" class="col-form-label col-sm-4">Skill : </label>
-            <div class="col-sm-8 my-auto">
-              <input type="text"
-                   name="${settings.fieldName}[${index}][skill]"
-                   value=""
-                   id="skill_${index}"
-                   class="form-control form-control-sm"
-                   placeholder="Skill">
-            </div>
-          </div>
-
-          <div class="col-sm-4 m-0">
-            <button type="button"
-                class="btn btn-sm btn-outline-danger ${settings.removeClass}"
-                data-index="${index}">Remove</button>
-          </div>
-        </div>
-      `;
-    };
-
-    // Remove a row
-    const removeRow = function(e) {
-      const $button = $(this);
-
-      // const idIndex = $button.data('index') ?? $button.data('id');
-
-       const idIndex = $button.attr('data-index') ?? $button.attr('data-id');
-
-
-      let $row = $(`#${settings.rowSelector}_${idIndex}`, $wrapper);
-
-      if (!$row.length) {
-        $row = $button.closest(`.${settings.rowSelector}`);
-      }
-
-      if ($row.length) {
-
-        if (typeof settings.onRemove === 'function') {
-          const result = settings.onRemove(idIndex, e, $row, settings.fieldName);
-
-          if (result && typeof result.then === 'function') {
-            result.then(allow => {
-              if (allow === false) return;
-
-              $row.remove();
-              i--;
-              reindexRowAll();
-            });
-
-            return false;
-          }
-
-          if (result === false) {
-            return false;
-          }
-        }
-
-        $row.remove();
-        i--;
-        reindexRowAll();
-      }
-
-      if (e && e.preventDefault) e.preventDefault();
-      return false;
-    };
-
-
-
-    // Reindex functions (unchanged)
-
-    // 1️⃣ reindexRowNamePattern (Updated)
-    const reindexRowNamePattern = function () {
-      if (!settings.reindexRowName || !settings.reindexRowName.length) return;
-
-      const $rows = $wrapper.find(`.${settings.rowSelector}`);
-      const start = Number(settings.startRow);
-
-      $rows.each(function (newIndex) {
-
-        const d = start + newIndex;
-        const $row = $(this);
-
-        settings.reindexRowName.forEach(attr => {
-
-      /* ================================
-       * OUTER (NOT inside nestedwrapper)
-       * ================================ */
-          $row.find(`[${attr}]`)
-          .not($row.find(`${settings.nestedwrapper} *`))
-          .each(function () {
-            const $el = $(this);
-            const val = $el.attr(attr);
-            if (!val) return;
-
-            if (attr === 'index_pattern') {
-              $el.attr(attr, d);
-              return;
-            }
-
-            const matches = [...val.matchAll(/\[([^\]]+)\]/g)];
-            if (matches.length < 2) return;
-
-            const target = matches[matches.length - 2];
-            const before = val.slice(0, target.index);
-            const after  = val.slice(target.index + target[0].length);
-
-            $el.attr(attr, `${before}[${d}]${after}`);
-          });
-
-      /* ================================
-       * INNER (inside nestedwrapper)
-       * ================================ */
-          $row.find(settings.nestedwrapper)
-          .find(`[${attr}]`)
-          .each(function () {
-            const $el = $(this);
-            const val = $el.attr(attr);
-            if (!val) return;
-
-            const matches = [...val.matchAll(/\[([^\]]+)\]/g)];
-            if (matches.length < 4) return;
-
-            const target = matches[matches.length - 4];
-            const before = val.slice(0, target.index);
-            const after  = val.slice(target.index + target[0].length);
-
-            $el.attr(attr, `${before}[${d}]${after}`);
-          });
-
-        });
-      });
-    };
-
-
-    // 2️⃣ reindexRowIDPattern (Updated)
-    const reindexRowIDPattern = function () {
-      if (!settings.reindexRowID || !settings.reindexRowID.length) return;
-
-      const $rows = $wrapper.find(`.${settings.rowSelector}`);
-      const start = Number(settings.startRow);
-
-      $rows.each(function (newIndex) {
-
-        const e = start + newIndex;
-        const $row = $(this);
-
-        /* ================================
-         * 1) REINDEX ROW ITSELF
-         * ================================ */
-        $row.attr('id', `${settings.rowSelector}_${e}`);
-
-        settings.reindexRowID.forEach(attr => {
-
-            /* ================================
-             * 2) OUTER ATTR REINDEX
-             * Replace LAST _<num>
-             * ================================ */
-          $row.find(`[${attr}]`)
-          .not($row.find(`${settings.nestedwrapper} *`))
-          .each(function () {
-
-            const $el = $(this);
-            const val = $el.attr(attr);
-            if (!val) return;
-
-            $el.attr(attr, val.replace(/_(\d+)$/, `_${e}`));
-          });
-
-            /* ================================
-             * 3) INNER ATTR REINDEX
-             * Replace SECOND-LAST _<num>
-             * Example:
-             *   rowserial_501_10 → rowserial_500_10
-             * ================================ */
-          $row.find(settings.nestedwrapper)
-          .find(`[${attr}]`)
-          .each(function () {
-
-            const $el = $(this);
-            const val = $el.attr(attr);
-            if (!val) return;
-
-            const updated = val.replace(
-                                        /_(\d+)(?=_(\d+)$)/,
-                                      `_${e}`
-                                      );
-
-            $el.attr(attr, updated);
-          });
-        });
-
-        /* ================================
-         * 4) NESTED CLASS FIX (CORRECT PLACE)
-         * ================================ */
-
-        const $nestedWrap = $row.find(settings.nestedwrapper);
-
-        // rowserial_502 → rowserial_501
-        const rowRe = new RegExp(`${settings.rowSelector}_(\\d+)`, 'g');
-
-        $nestedWrap.find(`[class*="${settings.rowSelector}_"]`).each(function () {
-
-          const $el = $(this);
-          const cls = $el.attr('class');
-          if (!cls) return;
-
-          $el.attr('class', cls.replace(rowRe, `${settings.rowSelector}_${e}`));
-        });
-
-        // serial_remove_502 → serial_remove_501
-        const removeRe = new RegExp(`${settings.removeClass}_(\\d+)`, 'g');
-
-        $nestedWrap.find(`[class*="${settings.removeClass}_"]`).each(function () {
-
-          const $el = $(this);
-          const cls = $el.attr('class');
-          if (!cls) return;
-
-          $el.attr('class', cls.replace(removeRe, `${settings.removeClass}_${e}`));
-        });
-      });
-    };
-
-    // 3️⃣ reindexRowIndexPattern (Updated)
-    const reindexRowIndexPattern = function () {
-      if (!settings.reindexRowIndex || !settings.reindexRowIndex.length) return;
-
-      const $rows = $wrapper.find(`.${settings.rowSelector}`);
-      const a = Number(settings.startRow);
-
-      $rows.each(function (newIndex) {
-
-        const newPosition = a + newIndex;
-        const $row = $(this);
-
-        settings.reindexRowIndex.forEach(attr => {
-
-      /* ================================
-       * OUTER (NOT inside nestedwrapper)
-       * ================================ */
-          $row.find(`[${attr}]`)
-          .not($row.find(`${settings.nestedwrapper} *`))
-          .each(function () {
-            const $el = $(this);
-            const val = $el.attr(attr);
-            if (!val) return;
-
-            $el.attr(attr, val.replace(/(\d+)$/, newPosition));
-          });
-
-      /* ================================
-       * INNER (inside nestedwrapper)
-       * ================================ */
-          $row.find(settings.nestedwrapper)
-          .find(`[${attr}]`)
-          .each(function () {
-            const $el = $(this);
-            const val = $el.attr(attr);
-            if (!val) return;
-
-            $el.attr(attr, val.replace(/(\d+)(?=_(\d+)$)/, newPosition));
-          });
-
-        });
-      });
-    };
-
-
-    // Master reindex function
-    const reindexRowAll = function() {
-      const $rows = $wrapper.find(`.${settings.rowSelector}`);
-      if ($rows.length === 0) return;
-
-      // Reindex all attributes
-      reindexRowIDPattern();      // First: IDs and FOR attributes
-      reindexRowNamePattern();    // Second: Name attributes
-      reindexRowIndexPattern();   // Third: Index-based attributes
-
-      console.log(`Reindexing complete. Now ${$rows.length} rows.`);
-    };
-
-    // Public methods
-    const methods = {
-      add: function() {
-        if (i < settings.maxRows) {
-          const event = new Event('click');
-          addRow(event);
-        }
-        return this;
-      },
-      remove: function(index) {
-        const $removeBtn = $wrapper.find(`#${settings.rowSelector}_${index} .${settings.removeClass}`);
-        if ($removeBtn.length) {
-          $removeBtn.trigger('click.remAddRow');
-        }
-        return this;
-      },
-      getCount: function() {
-        return i;
-      },
-      reset: function() {
-        $wrapper.find(`.${settings.rowSelector}`).remove();
-        i = 0;
-        return this;
-      },
-      reindexAll: function() {
-        reindexRowAll();
-        return this;
-      },
-      setReindexConfig: function(type, attributes) {
-        if (type === 'name') {
-          settings.reindexRowName = Array.isArray(attributes) ? attributes : [attributes];
-        } else if (type === 'id') {
-          settings.reindexRowID = Array.isArray(attributes) ? attributes : [attributes];
-        } else if (type === 'index') {
-          settings.reindexRowIndex = Array.isArray(attributes) ? attributes : [attributes];
-        }
-        return this;
-      },
-      getConfig: function() {
-        return {
-          fieldName: settings.fieldName,
-          rowSelector: settings.rowSelector,
-          removeClass: settings.removeClass,
-          maxRows: settings.maxRows,
-          currentIndex: i,
-          reindexConfig: {
-            name: settings.reindexRowName,
-            id: settings.reindexRowID,
-            index: settings.reindexRowIndex
-          }
-        };
-      },
-      destroy: function() {
-        if (settings.addBtn) {
-          $(settings.addBtn).off('click.remAddRow');
-        }
-        $wrapper.off('click.remAddRow', `.${settings.removeClass}`);
-        this.reset();
-        return this;
-      }
-    };
-
-    // Initialize and return methods
-    return init();
-  };
-
-  // Add noConflict method
-  $.fn.remAddRow.noConflict = function() {
-    $.fn.remAddRow = old;
-    return this;
-  };
-
-  // Store the old version in case of conflict
-  const old = $.fn.remAddRow;
-
-})(jQuery);
-
-
-
-based on this plugin,
-i want u to write a comprehensive detailed README.md
-on its :
-0. package depemdemcy
-1. available option and explaination of each options
-2. detailed explaination usage on how to use it vy giving comprehensive detail example
-3. and other necessary things that should include for this documentation
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# remAddRow - jQuery Dynamic Form Rows Plugin
+# Add Remove Row - jQuery Dynamic Form Rows Plugin
 
 A lightweight, feature-rich jQuery plugin for managing dynamic form rows with automatic reindexing, nested form support, and comprehensive event handling.
 
@@ -537,7 +24,7 @@ A lightweight, feature-rich jQuery plugin for managing dynamic form rows with au
 <button id="addRowBtn" class="btn btn-primary">Add Row</button>
 
 <script>
-$('#formContainer').remAddRow({
+$('#formContainer').addRemRow({
     addBtn: '#addRowBtn',
     maxRows: 10
 });
@@ -574,7 +61,7 @@ $('#formContainer').remAddRow({
 | `onRemove` | function | `(index, event, $row, name)` | Called before removing a row |
 | `rowTemplate` | function | `(index, fieldName)` | Custom HTML template for rows |
 
-## 📖 2. Detailed Usage Examples
+## 📖 2. Usage Examples
 
 ### Basic Example - Simple Form Rows
 ```html
@@ -584,7 +71,7 @@ $('#formContainer').remAddRow({
 <button id="addBtn" class="btn btn-primary">Add Person</button>
 
 <script>
-$('#simpleForm').remAddRow({
+$('#simpleForm').addRemRow({
     addBtn: '#addBtn',
     maxRows: 5,
     fieldName: 'people',
@@ -610,7 +97,7 @@ $('#simpleForm').remAddRow({
 <button id="addProduct" class="btn btn-success">Add Product</button>
 
 <script>
-$('#productForm').remAddRow({
+$('#productForm').addRemRow({
     addBtn: '#addProduct',
     maxRows: 10,
     fieldName: 'products',
@@ -666,7 +153,7 @@ $('#productForm').remAddRow({
 <button id="addMainRow" class="btn btn-primary">Add Category</button>
 
 <script>
-$('#mainForm').remAddRow({
+$('#mainForm').addRemRow({
     addBtn: '#addMainRow',
     maxRows: 5,
     fieldName: 'categories',
@@ -712,7 +199,7 @@ $('#mainForm').remAddRow({
         // Initialize nested plugin for this category
         const $innerContainer = $row.find('.inner-rows');
 
-        $innerContainer.remAddRow({
+        $innerContainer.addRemRow({
             addBtn: $row.find('.add-inner-row'),
             maxRows: 3,
             fieldName: `${name}[${index}][items]`,
@@ -760,7 +247,7 @@ $('#mainForm').remAddRow({
 </form>
 
 <script>
-$('#dynamicRows').remAddRow({
+$('#dynamicRows').addRemRow({
     addBtn: '#addRowBtn',
     maxRows: 5,
     fieldName: 'employees',
@@ -828,7 +315,7 @@ $('#dynamicRows').remAddRow({
 
 ### Accessing Methods
 ```javascript
-const plugin = $('#container').remAddRow(options);
+const plugin = $('#container').addRemRow(options);
 
 // Use methods
 plugin.add();          // Add a row
@@ -853,7 +340,7 @@ plugin.reindexAll();   // Force reindex all rows
 ### Method Usage Examples
 ```javascript
 // Initialize
-const dynamicForm = $('#formContainer').remAddRow({
+const dynamicForm = $('#formContainer').addRemRow({
     addBtn: '#addBtn',
     maxRows: 10
 });
@@ -919,7 +406,7 @@ When using `nestedwrapper`, the plugin handles two-level reindexing:
 
 ### Custom Event Integration
 ```javascript
-$('#container').remAddRow({
+$('#container').addRemRow({
     // ... other options ...
 
     onAdd: function(index, event, $row, name) {
@@ -996,8 +483,8 @@ const userConfig = {
 };
 
 // Initialize multiple instances
-const productForm = $('#products').remAddRow(productConfig);
-const userForm = $('#users').remAddRow(userConfig);
+const productForm = $('#products').addRemRow(productConfig);
+const userForm = $('#users').addRemRow(userConfig);
 ```
 
 ### Integration with Vue/React (via jQuery wrapper)
@@ -1005,7 +492,7 @@ const userForm = $('#users').remAddRow(userConfig);
 // React component example
 class DynamicForm extends React.Component {
     componentDidMount() {
-        this.plugin = $(this.container).remAddRow({
+        this.plugin = $(this.container).addRemRow({
             addBtn: this.addButton,
             maxRows: this.props.maxRows,
             rowTemplate: this.renderRow.bind(this)
@@ -1082,7 +569,7 @@ This plugin is open-source and can be modified for your needs. Include credit to
 
 ```javascript
 /**
- * remAddRow - jQuery Dynamic Form Rows Plugin
+ * addRemRow - jQuery Dynamic Form Rows Plugin
  * @version 1.0.0
  * @license MIT
  * @author Your Name
@@ -1093,7 +580,7 @@ This plugin is open-source and can be modified for your needs. Include credit to
 ## 🆘 10. Support & Contribution
 
 For issues, feature requests, or contributions:
-1. Check the [GitHub repository](https://github.com/yourusername/remAddRow)
+1. Check the [GitHub repository](https://github.com/kroos/jQuery-Add-Remove-Row)
 2. Create detailed bug reports with examples
 3. Follow the existing code style for contributions
 

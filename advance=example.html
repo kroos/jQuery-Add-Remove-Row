@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete remAddRow Plugin Example</title>
+    <title>Complete addRemRow Plugin Example</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .custom-row {
@@ -42,7 +42,7 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="mb-4">Complete remAddRow Plugin Example</h1>
+        <h1 class="mb-4">Complete addRemRow Plugin Example</h1>
 
         <!-- Stats Display -->
         <div class="row stats">
@@ -171,7 +171,7 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <!-- Our Plugin -->
-    <script src="addRemoveRowjQueryPlugins.js"></script>
+    <script src="addRemRow.js"></script>
 
     <script>
         $(document).ready(function() {
@@ -401,9 +401,9 @@
             }
 
             // Initialize the plugin with ALL options
-            log('Initializing remAddRow plugin with all options...', 'info');
+            log('Initializing addRemRow plugin with all options...', 'info');
 
-            const plugin = $('#rowWrapper').remAddRow({
+            const plugin = $('#rowWrapper').addRemRow({
                 // Basic Configuration
                 addBtn: '#customAddBtn',
                 maxRows: 7,
