@@ -329,6 +329,7 @@ plugin.reindexAll();   // Force reindex all rows
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
 | `add()` | None | Plugin instance | Adds a new row |
+| `addBatch(dataArray)` | `dataArray` (array) | Plugin instance | Batch add multiple rows with data |
 | `remove(index)` | `index` (number) | Plugin instance | Removes row at specified index |
 | `getCount()` | None | number | Returns current number of rows |
 | `reset()` | None | Plugin instance | Removes all rows, resets counter |
@@ -336,6 +337,22 @@ plugin.reindexAll();   // Force reindex all rows
 | `setReindexConfig(type, attributes)` | `type` (string): 'name', 'id', or 'index'<br>`attributes` (array/string) | Plugin instance | Updates reindexing configuration |
 | `getConfig()` | None | object | Returns current configuration |
 | `destroy()` | None | Plugin instance | Removes all events, resets DOM |
+| `getRow(index)` | `index` (number) | string/null | Gets HTML of specific row |
+| `getAllData()` | None | array | Returns all row data as array of objects |
+| `hasRow(index)` | `index` (number) | boolean | Checks if specific row exists |
+| `getWrapper()` | None | jQuery object | Returns wrapper element |
+| `validateAll(options)` | `options` (object) | validation object | Validates all rows with custom rules |
+| `clearAll()` | None | Plugin instance | Clears all field values |
+| `disableAll()` | None | Plugin instance | Disables all rows and fields |
+| `enableAll()` | None | Plugin instance | Enables all rows and fields |
+| `setRowData(index, data)` | `index` (number), `data` (object) | Plugin instance | Sets data for specific row |
+| `exportJSON()` | None | string | Exports all rows as JSON string |
+| `importJSON(jsonString, clearExisting)` | `jsonString` (string), `clearExisting` (boolean) | result object | Imports rows from JSON |
+| `findRowByField(fieldName, value)` | `fieldName` (string), `value` (any) | array | Finds rows by field value |
+| `countBy(conditionCallback)` | `conditionCallback` (function) | number | Counts rows matching condition |
+| `toggleRows(show)` | `show` (boolean) | Plugin instance | Shows/hides all rows |
+| `filterRows(filterCallback)` | `filterCallback` (function) | Plugin instance | Filters rows based on callback |
+| `sortRows(fieldName, ascending)` | `fieldName` (string), `ascending` (boolean) | Plugin instance | Sorts rows by field value |
 
 ### Method Usage Examples
 ```javascript
@@ -373,6 +390,219 @@ $(window).on('beforeunload', function() {
     dynamicForm.destroy();
 });
 ```
+
+### New Methods Examples
+
+#### Data Management
+```javascript
+// Get all row data
+const allData = plugin.getAllData();
+console.log('All row data:', allData);
+
+// Export as JSON
+const jsonData = plugin.exportJSON();
+console.log('JSON export:', jsonData);
+
+// Import from JSON
+const importResult = plugin.importJSON('[{"name":"John","skill":"JS"},{"name":"Jane","skill":"Python"}]', true);
+if (importResult.success) {
+    console.log(`Imported ${importResult.count} rows`);
+}
+
+// Set data for specific row
+plugin.setRowData(2, {
+    name: 'Alice',
+    skill: 'React'
+});
+
+// Batch add multiple rows
+plugin.addBatch([
+    {name: 'Bob', skill: 'Vue'},
+    {name: 'Charlie', skill: 'Angular'}
+]);
+```
+
+#### Validation
+```javascript
+// Validate all rows
+const validation = plugin.validateAll({
+    required: true,
+    minLength: 2,
+    maxLength: 50,
+    customValidation: function($field, rowIndex) {
+        if ($field.attr('name').includes('email')) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test($field.val())) {
+                return {
+                    valid: false,
+                    message: 'Invalid email format'
+                };
+            }
+        }
+        return { valid: true };
+    }
+});
+
+if (!validation.valid) {
+    console.log('Validation errors:', validation.getAllErrors());
+    console.log('First error:', validation.getFirstError());
+}
+```
+
+#### Row Operations
+```javascript
+// Find rows by field value
+const johnRows = plugin.findRowByField('name', 'John');
+johnRows.forEach(row => {
+    console.log(`Found John at row ${row.index}`);
+});
+
+// Count rows with specific condition
+const jsExperts = plugin.countBy(function($row, index) {
+    return $row.find('[name*="[skill]"]').val() === 'JavaScript';
+});
+console.log(`JavaScript experts: ${jsExperts}`);
+
+// Filter rows
+plugin.filterRows(function($row, index) {
+    const skill = $row.find('[name*="[skill]"]').val();
+    return skill.includes('JS') || skill.includes('JavaScript');
+});
+
+// Sort rows by name
+plugin.sortRows('name', true); // Ascending
+
+// Toggle visibility
+plugin.toggleRows(false); // Hide all rows
+plugin.toggleRows(true);  // Show all rows
+
+// Get specific row HTML
+const row2HTML = plugin.getRow(2);
+console.log('Row 2 HTML:', row2HTML);
+
+// Check if row exists
+if (plugin.hasRow(3)) {
+    console.log('Row 3 exists');
+}
+```
+
+#### Form Control
+```javascript
+// Clear all form fields
+$('#clearBtn').click(function() {
+    plugin.clearAll();
+});
+
+// Disable all fields (read-only mode)
+plugin.disableAll();
+
+// Enable all fields
+plugin.enableAll();
+
+// Get wrapper for custom operations
+const $wrapper = plugin.getWrapper();
+$wrapper.addClass('highlighted');
+```
+
+#### Advanced Usage
+```javascript
+// Chain multiple operations
+plugin
+    .clearAll()
+    .addBatch(sampleData)
+    .sortRows('name')
+    .validateAll()
+    .reindexAll();
+
+// Search and highlight
+$('#searchBtn').click(function() {
+    const query = $('#searchInput').val().toLowerCase();
+    plugin.filterRows(function($row, index) {
+        const rowText = $row.text().toLowerCase();
+        const matches = rowText.includes(query);
+        $row.toggleClass('highlight-match', matches);
+        return true; // Show all, but highlight matches
+    });
+});
+
+// Export to CSV
+function exportToCSV() {
+    const data = plugin.getAllData();
+    let csv = 'Name,Skill\n';
+    data.forEach(row => {
+        csv += `"${row.name || ''}","${row.skill || ''}"\n`;
+    });
+    return csv;
+}
+```
+
+#### Integration with External Libraries
+```javascript
+// With DataTables
+const table = $('#dataTable').DataTable();
+const refreshTable = function() {
+    table.clear();
+    plugin.getAllData().forEach(row => {
+        table.row.add([row.name, row.skill, row.email]);
+    });
+    table.draw();
+};
+
+// With Chart.js
+const updateChart = function() {
+    const data = plugin.getAllData();
+    const skillCounts = {};
+    data.forEach(row => {
+        skillCounts[row.skill] = (skillCounts[row.skill] || 0) + 1;
+    });
+
+    // Update chart data
+    chart.data.labels = Object.keys(skillCounts);
+    chart.data.datasets[0].data = Object.values(skillCounts);
+    chart.update();
+};
+
+// Auto-save to localStorage
+$(window).on('beforeunload', function() {
+    const jsonData = plugin.exportJSON();
+    localStorage.setItem('formData', jsonData);
+});
+
+// Load from localStorage on page load
+$(document).ready(function() {
+    const savedData = localStorage.getItem('formData');
+    if (savedData) {
+        plugin.importJSON(savedData, true);
+    }
+});
+```
+
+### Method Chaining Examples
+```javascript
+// Complex operation chain
+plugin
+    .reset()                           // Clear everything
+    .addBatch(initialData)             // Add initial dataset
+    .sortRows('skill', true)           // Sort by skill
+    .filterRows(function($row, idx) {   // Filter by condition
+        return $row.find('[name*="[experience]"]').val() > 3;
+    })
+    .validateAll({                     // Validate
+        required: true,
+        customValidation: customValidator
+    })
+    .reindexAll();                     // Ensure proper indexing
+
+// Quick setup chain
+$('#container')
+    .addRemRow(config)
+    .addBatch(defaultRows)
+    .disableAll()        // Start disabled
+    .on('enableForm', function() {
+        $(this).enableAll(); // Enable on custom event
+    });
+````
+
 
 ## 🎯 4. Reindexing Logic Explained
 

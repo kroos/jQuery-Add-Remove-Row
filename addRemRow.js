@@ -538,6 +538,317 @@
 				this.reset();
 				return this;
 			}
+
+// Get the HTML of a specific row
+			getRowHTML: function(index) {
+				const $row = $wrapper.find(`#${settings.rowSelector}_${index}`);
+				return $row.length ? $row.prop('outerHTML') : null;
+			},
+
+// Get all row data as an array of objects
+			getAllData: function() {
+				const data = [];
+				const $rows = $wrapper.find(`.${settings.rowSelector}`);
+
+				$rows.each(function(index) {
+					const rowData = {};
+					const $row = $(this);
+
+				// Get all form field values from the row
+					$row.find('[name]').each(function() {
+						const $field = $(this);
+						const name = $field.attr('name');
+						const value = $field.val();
+
+						// Parse the name to extract the field path
+						const matches = name.match(/\[([^\]]+)\]/g);
+						if (matches) {
+								// Remove brackets and build object path
+							const keys = matches.map(match => match.replace(/\[|\]/g, ''));
+							let obj = rowData;
+
+							for (let i = 0; i < keys.length - 1; i++) {
+								if (!obj[keys[i]]) obj[keys[i]] = {};
+								obj = obj[keys[i]];
+							}
+
+							obj[keys[keys.length - 1]] = value;
+						}
+					});
+
+					data.push(rowData);
+				});
+
+				return data;
+			},
+
+// Check if a specific row exists
+			hasRow: function(index) {
+				return $wrapper.find(`#${settings.rowSelector}_${index}`).length > 0;
+			},
+
+// Get the wrapper element
+			getWrapper: function() {
+				return $wrapper;
+			},
+
+// Validate all rows (returns true if all rows are valid)
+			validateAll: function(options = {}) {
+				const defaultOptions = {
+					required: true,
+					minLength: 0,
+					maxLength: null,
+					customValidation: null
+				};
+
+				const validationOpts = Object.assign({}, defaultOptions, options);
+				let isValid = true;
+				const errors = [];
+
+				$wrapper.find(`.${settings.rowSelector}`).each(function(rowIndex) {
+					const $row = $(this);
+
+					$row.find('input, select, textarea').each(function() {
+						const $field = $(this);
+						const value = $field.val();
+						const name = $field.attr('name');
+
+						// Check required
+						if (validationOpts.required && $field.prop('required') && !value.trim()) {
+							isValid = false;
+							errors.push({
+								row: rowIndex,
+								field: name,
+								error: 'This field is required'
+							});
+							$field.addClass('is-invalid');
+						}
+
+						// Check min length
+						else if (validationOpts.minLength > 0 && value.length < validationOpts.minLength) {
+							isValid = false;
+							errors.push({
+								row: rowIndex,
+								field: name,
+								error: `Minimum ${validationOpts.minLength} characters required`
+							});
+							$field.addClass('is-invalid');
+						}
+
+						// Check max length
+						else if (validationOpts.maxLength && value.length > validationOpts.maxLength) {
+							isValid = false;
+							errors.push({
+								row: rowIndex,
+								field: name,
+								error: `Maximum ${validationOpts.maxLength} characters allowed`
+							});
+							$field.addClass('is-invalid');
+						}
+
+						// Custom validation
+						else if (validationOpts.customValidation && typeof validationOpts.customValidation === 'function') {
+							const customResult = validationOpts.customValidation($field, rowIndex);
+							if (customResult && !customResult.valid) {
+								isValid = false;
+								errors.push({
+									row: rowIndex,
+									field: name,
+									error: customResult.message || 'Validation failed'
+								});
+								$field.addClass('is-invalid');
+							}
+						}
+
+						else {
+							$field.removeClass('is-invalid');
+						}
+					});
+				});
+
+				return {
+					valid: isValid,
+					errors: errors,
+					getFirstError: function() {
+						return errors.length > 0 ? errors[0] : null;
+					},
+					getAllErrors: function() {
+						return errors;
+					}
+				};
+			},
+
+// Clear all row fields
+			clearAll: function() {
+				$wrapper.find(`.${settings.rowSelector}`).each(function() {
+					$(this).find('input, select, textarea').val('');
+				});
+				return this;
+			},
+
+// Disable all rows
+			disableAll: function() {
+				$wrapper.find(`.${settings.rowSelector}`).each(function() {
+					$(this).find('input, select, textarea, button').prop('disabled', true);
+				});
+				if (settings.addBtn) {
+					$(settings.addBtn).prop('disabled', true);
+				}
+				return this;
+			},
+
+// Enable all rows
+			enableAll: function() {
+				$wrapper.find(`.${settings.rowSelector}`).each(function() {
+					$(this).find('input, select, textarea, button').prop('disabled', false);
+				});
+				if (settings.addBtn) {
+					$(settings.addBtn).prop('disabled', false);
+				}
+				return this;
+			},
+
+// Set data for a specific row
+			setRowData: function(index, data) {
+				const $row = $wrapper.find(`#${settings.rowSelector}_${index}`);
+				if (!$row.length) return this;
+
+				Object.keys(data).forEach(key => {
+					const $field = $row.find(`[name*="[${key}]"]`);
+					if ($field.length) {
+						$field.val(data[key]);
+					}
+				});
+
+				return this;
+			},
+
+// Batch add multiple rows
+			addBatch: function(dataArray) {
+				if (!Array.isArray(dataArray)) return this;
+
+				dataArray.forEach((data, index) => {
+					if (i < settings.maxRows) {
+						const event = new Event('click');
+						addRow(event);
+						// Set data if row was added
+						const $row = $wrapper.find(`#${settings.rowSelector}_${i - 1}`);
+						if ($row.length) {
+							Object.keys(data).forEach(key => {
+								const $field = $row.find(`[name*="[${key}]"]`);
+								if ($field.length) {
+									$field.val(data[key]);
+								}
+							});
+						}
+					}
+				});
+
+				return this;
+			},
+
+// Export rows as JSON
+			exportJSON: function() {
+				const data = this.getAllData();
+				return JSON.stringify(data, null, 2);
+			},
+
+// Import rows from JSON
+			importJSON: function(jsonString, clearExisting = false) {
+				try {
+					const data = JSON.parse(jsonString);
+
+					if (clearExisting) {
+						this.reset();
+					}
+
+					if (Array.isArray(data)) {
+						this.addBatch(data);
+					}
+
+					return { success: true, count: data.length };
+				} catch (error) {
+					return { success: false, error: error.message };
+				}
+			},
+
+// Find row by field value
+			findRowByField: function(fieldName, value) {
+				const rows = [];
+
+				$wrapper.find(`.${settings.rowSelector}`).each(function(index) {
+					const $field = $(this).find(`[name*="[${fieldName}]"]`);
+					if ($field.length && $field.val() === value) {
+						rows.push({
+							index: index,
+							$row: $(this),
+							data: $(this).find('[name]').serializeArray()
+						});
+					}
+				});
+
+				return rows;
+			},
+
+// Get row count by condition
+			countBy: function(conditionCallback) {
+				if (typeof conditionCallback !== 'function') return 0;
+
+				let count = 0;
+				$wrapper.find(`.${settings.rowSelector}`).each(function(index) {
+					if (conditionCallback($(this), index)) {
+						count++;
+					}
+				});
+
+				return count;
+			},
+
+// Show/hide rows
+			toggleRows: function(show = true) {
+				const display = show ? '' : 'none';
+				$wrapper.find(`.${settings.rowSelector}`).css('display', display);
+				return this;
+			},
+
+// Filter rows
+			filterRows: function(filterCallback) {
+				$wrapper.find(`.${settings.rowSelector}`).each(function(index) {
+					const $row = $(this);
+					const shouldShow = filterCallback($row, index);
+					$row.css('display', shouldShow ? '' : 'none');
+				});
+				return this;
+			},
+
+// Sort rows by field value
+			sortRows: function(fieldName, ascending = true) {
+				const $rows = $wrapper.find(`.${settings.rowSelector}`).detach();
+				const rowsArray = $rows.toArray();
+
+				rowsArray.sort((a, b) => {
+					const $aField = $(a).find(`[name*="[${fieldName}]"]`);
+					const $bField = $(b).find(`[name*="[${fieldName}]"]`);
+					const valA = $aField.length ? $aField.val() : '';
+					const valB = $bField.length ? $bField.val() : '';
+
+					if (valA < valB) return ascending ? -1 : 1;
+					if (valA > valB) return ascending ? 1 : -1;
+					return 0;
+				});
+
+				rowsArray.forEach(row => {
+					$wrapper.append(row);
+				});
+
+				this.reindexAll();
+				return this;
+			}
+
+
+
+
+
 		};
 
 		// Initialize and return methods
