@@ -1,0 +1,26 @@
+{
+  "name": "addremrow",
+  "version": "1.0.0",
+  "description": "A lightweight, feature-rich jQuery plugin for managing dynamic form rows with automatic reindexing, nested form support, and comprehensive event handling.",
+  "keywords": [
+    "add",
+    "remove",
+    "row",
+    "dynamically",
+    "jquery",
+    "multiple",
+    "input",
+    "dynamic",
+    "plugin"
+  ],
+  "license": "ISC",
+  "author": "kroos",
+  "type": "commonjs",
+  "main": "addRemRow.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "jquery": "^3.6.0"
+  }
+}
