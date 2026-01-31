@@ -5,7 +5,7 @@ A lightweight, feature-rich jQuery plugin for managing dynamic form rows with au
 ## 📦 0. Package Dependency
 
 ### Required
-- **jQuery 3.0+** (tested with 3.6.0+)
+- **jQuery 3.6+**
 - **Bootstrap 4/5** (optional, for default styling)
 
 ### Installation
@@ -13,9 +13,37 @@ A lightweight, feature-rich jQuery plugin for managing dynamic form rows with au
 <!-- Include jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+<!-- Plugin -->
+<script src="addRemRow.js"></script>
+
 <!-- Include Bootstrap (optional) -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+```
+
+
+### NPM Installation
+- ensure jQuery is loaded.
+
+```npm
+
+npm install addremrow
+
+```
+
+then in app.js
+a) webpack / laravel-mix
+``` bash
+
+require('addremrow');
+
+````
+
+b) Vite
+``` bash
+
+import  'addremrow';
+
 ```
 
 ### Quick Start
