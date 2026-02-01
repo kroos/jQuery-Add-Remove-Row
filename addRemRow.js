@@ -537,7 +537,7 @@
 				$wrapper.off('click.addRemRow', `.${settings.removeClass}`);
 				this.reset();
 				return this;
-			}
+			},
 
 // Get the HTML of a specific row
 			getRowHTML: function(index) {

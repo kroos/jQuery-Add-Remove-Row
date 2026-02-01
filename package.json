@@ -1,6 +1,6 @@
 {
   "name": "addremrow",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A lightweight, feature-rich jQuery plugin for managing dynamic form rows with automatic reindexing, nested form support, and comprehensive event handling.",
   "keywords": [
     "add",
